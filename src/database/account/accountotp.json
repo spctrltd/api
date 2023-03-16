@@ -1,0 +1,22 @@
+{
+  "model": {
+    "id": "ObjectId",
+    "userId": "ObjectId",
+    "otp": "String",
+    "expires": "Date"
+  },
+  "schema": {
+    "encryptPassword": true,
+    "idField": "id",
+    "passwordField": "otp",
+    "virtuals": {
+      "userId": {
+        "ref": "accountuser",
+        "localField": "accountUserId",
+        "foreignField": "id",
+        "options": { "sort": { "expires": -1 } }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,1 @@
+npm install @koa/cors @koa/router crypto-js jsonwebtoken koa koa-body koa-jwt koa-passport koa-session moment mongoose passport-jwt passport-local sequelize sqlite3

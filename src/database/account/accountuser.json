@@ -1,0 +1,18 @@
+{
+  "model": {
+    "id": "ObjectId",
+    "username": {
+      "type": "String",
+      "unique": true
+    },
+    "email": {
+      "type": "String",
+      "unique": true
+    },
+    "password": "String"
+  },
+  "schema": {
+    "encryptPassword": true,
+    "idField": "id"
+  }
+}

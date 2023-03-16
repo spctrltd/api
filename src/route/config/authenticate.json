@@ -1,0 +1,8 @@
+[
+	{
+		"method": "POST",
+		"path": "/authenticate/login",
+		"public": true,
+		"middleware": "login"
+	}
+]

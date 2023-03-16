@@ -1,0 +1,14 @@
+[
+	{
+		"method": "GET",
+		"path": "/session/user",
+		"middleware": "session",
+		"handler": "session"
+	},
+	{
+		"method": "GET",
+		"path": "/session/user/:id",
+		"middleware": "session",
+		"handler": "session"
+	}
+]
