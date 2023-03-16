@@ -1,6 +1,6 @@
 import path from 'path'
 import {Sequelize} from 'sequelize'
-import {fileExists, mkdir} from '../helper.js'
+import {fileExists, mkdir, sequelizeOps} from '../helper.js'
 import schemaLoader from './loadSchemas.js'
 
 const userTemplate = {
@@ -68,13 +68,13 @@ export default class database {
 	}
 
 	findOne = async (model, data) => {
-		return await this.sequelize.models[model].findOne({where: data})
+		return await this.sequelize.models[model].findOne({where: sequelizeOps(data)})
 	}
 
 	find = async data => {
 		let where = {}
 		if (data) {
-			where = {where: data}
+			where = {where: sequelizeOps(data)}
 		}
 		return await this.sequelize.models[model].findAll(where)
 	}
@@ -83,11 +83,17 @@ export default class database {
 		await this.sequelize.models[model].create(data)
 	}
 
-	deleteAll = async (model, data) => {
-		await this.sequelize.models[model].deleteMany(data)
+	deleteAll = async model => {
+		await this.sequelize.models[model].destroy({
+			truncate: true
+		})
 	}
 
 	delete = async (model, data) => {
-		await this.sequelize.models[model].delete(data)
+		if (!data) {
+			return
+		}
+		// TODO: check the model fields, if where has none return.
+		await this.sequelize.models[model].destroy({where: sequelizeOps(data)})
 	}
 }

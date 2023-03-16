@@ -10,21 +10,21 @@ import moment from 'moment'
  */
 export default ctx => {
 	const {passport, generateToken, sessionKey, generateOTP, otpService} = ctx.helpers
-	const {otpSend} = ctx.request.body
-	const sendOTP = otpSend === true
+	const {sendOtp: otpInit} = ctx.request.body
+	const sendOtp = otpInit === true
 	return passport.authenticate('session', async (err, user) => {
 		if (err || !user) {
 			ctx.status = 403
 			return
 		}
 
-		if (sendOTP) {
+		if (sendOtp) {
 			try {
 				const pin = generateOTP()
-				await ctx.database.deleteMany('accountotp', {userId: user.id})
+				await ctx.database.delete('accountotp', {userId: user.id})
 				await ctx.database.insert('accountotp', {userId: user.id, expires: moment().add(30, 'minutes'), otp: pin})
 				if (otpService) {
-					await otpService(pin, database)
+					await otpService(pin, ctx.database)
 				}
 				ctx.status = 200
 				return

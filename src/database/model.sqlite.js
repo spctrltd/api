@@ -1,6 +1,5 @@
 import {DataTypes, Model} from 'sequelize'
 import {readJsonFile, hash} from '../helper.js'
-import SQLModel from './sql.mongoosified.model.class.js'
 
 const type = name => {
 	switch (name) {
@@ -125,7 +124,9 @@ export default async (name, modelPath, sequelize) => {
 			timestamps = true,
 		} = config.schema || {}
 
-		SQLModel.init(modelStructure, {
+		const sqlModel = class extends Model {}
+
+		sqlModel.init(modelStructure, {
 			timestamps,
 			sequelize,
   			modelName: name,

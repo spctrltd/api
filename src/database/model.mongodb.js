@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import {readJsonFile, validPassword} from '../helper.js'
+import {readJsonFile} from '../helper.js'
 
 const type = name => {
 	switch (name) {
@@ -115,8 +115,6 @@ export default (name, modelPath) => {
 		}
 
 		if (encryptPassword) {
-			schema.methods.validPassword = validPassword
-
 			schema.pre('save', function (next) {
 				if (idField) {
 					this[idField] = this._id

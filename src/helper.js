@@ -5,6 +5,7 @@ import jsonwebtoken from 'jsonwebtoken'
 import {fileURLToPath} from 'url'
 import path from 'path'
 import SHA256 from 'crypto-js/sha256.js'
+import {Op} from 'sequelize'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -106,7 +107,8 @@ export const generateOTP = (length = 5) => {
 }
 
 export const developerPrinter = data => {
-	if (process.env.NODE_ENV === 'development') {
+	const {NODE_ENV = 'development'} = process.env
+	if (NODE_ENV === 'development') {
 		console.info('------------------| >')
 		console.info(data)
 		console.info('------------------| <')
@@ -114,8 +116,36 @@ export const developerPrinter = data => {
 }
 
 export const hash = value => SHA256(value).toString()
-const hashCompare = (plainText, hashedValue) => hash(plainText) === hashedValue
+export const hashCompare = (plainText, hashedValue) => hash(`${plainText}`) === `${hashedValue}`
 
-export const validPassword = password => {
-	return hashCompare(password, this[passwordField])
+const sequelizeOpKeys = key => {
+	const keys = {
+		$gt: Op.gt
+	}
+	if (keys.hasOwnProperty(key)) {
+		return keys[key]
+	}
+	return key
+}
+
+export const sequelizeOps = query => {
+	if (query !== null && query !== undefined) {
+		if (Array.isArray(query)) {
+			return query.map(value => sequelizeOps(value))
+		}
+		if (typeof query === 'object' && Object.keys(query).length > 0) {
+			return Object.keys(query).reduce((builtQuery, key) => {
+				let value = query[key]
+				if (typeof query[key] === 'object') {
+					value = sequelizeOps(query[key])
+				}
+				const newKey = sequelizeOpKeys(key)
+				return {
+					...builtQuery,
+					[newKey]: value
+				}
+			}, {})
+		}
+	}
+	return query
 }
