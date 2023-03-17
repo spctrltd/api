@@ -29,29 +29,21 @@ const createConfigList = async (routePath, list = {}) => {
 	const handlerPathExists = await directoryExists(handlerPath)
 	const middlewarePathExists = await directoryExists(middlewarePath)
 	const fileList = readdirSync(configPath)
-	const configDataList = fileList.map(file => {
-		if (extname(file).toLowerCase() === '.json') {
-			const configData = readJsonFile(`${configPath}/${file}`)
-			if (Array.isArray(configData)) {
-				return configData
+	const configDataList = fileList
+		.map(file => {
+			if (extname(file).toLowerCase() === '.json') {
+				const configData = readJsonFile(`${configPath}/${file}`)
+				if (Array.isArray(configData)) {
+					return configData
+				}
 			}
-		}
-		return null
-	})
-	.filter(configData => configData !== null)
-	.reduce((prev, cur) => ([
-		...prev,
-		...cur
-	]), [])
+			return null
+		})
+		.filter(configData => configData !== null)
+		.reduce((prev, cur) => [...prev, ...cur], [])
 
 	const configList = configDataList.reduce(async (configered, config) => {
-		const {
-			method,
-			path,
-			middleware: middlewareName,
-			handler: handlerName,
-			role
-		} = config
+		const {method, path, middleware: middlewareName, handler: handlerName, role} = config
 		if (method && path) {
 			const middleware = await getMiddleware(middlewarePath, middlewareName, middlewarePathExists)
 			const handler = await getMiddleware(handlerPath, handlerName, handlerPathExists)
@@ -61,7 +53,9 @@ const createConfigList = async (routePath, list = {}) => {
 			return {
 				...configeredResolved,
 				[path]: {
-					...(configeredResolved.hasOwnProperty(path) ? configeredResolved[path] : {}),
+					...(Object.prototype.hasOwnProperty.call(configeredResolved, path)
+						? configeredResolved[path]
+						: {}),
 					[method]: {
 						middleware,
 						handler,
@@ -88,7 +82,7 @@ export default async router => {
 	Object.keys(configList).forEach(path => {
 		const pathConfig = configList[path]
 		Object.keys(pathConfig).forEach(method => {
-			const {middleware, handler, role} = pathConfig[method]
+			const {middleware, handler} = pathConfig[method]
 
 			router[method.toLowerCase()](...[path, middleware, handler].filter(param => param !== null))
 		})

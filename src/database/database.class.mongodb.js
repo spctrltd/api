@@ -1,26 +1,23 @@
 import mongoose from 'mongoose'
 import schemaLoader from './loadSchemas.js'
+import Database from './database.class.js'
 
-const {MONGO_CONNECTION_STRING = 'mongodb://localhost:27019/spctr-api-testing'} = process.env
+const {MONGODB_CONNECTION_STRING} = process.env
 
-const userTemplate = {
-	username: 'superuser',
-	password: 'superpassword'
-}
-
-export default class database {
+export default class extends Database {
+	type = 'mongodb'
 	constructor(options = {}) {
-		const {defaultUser = userTemplate} = options
-		this.connection = null
-		this.defaultUser = defaultUser
-		this.models = null
+		super(options)
+		const {connectionString} = options
+		this.connectionString = connectionString || MONGODB_CONNECTION_STRING
 	}
 
 	init = async () => {
-		const {models} = await schemaLoader('mongodb')
+		const {models} = await schemaLoader(this.type)
 		this.models = models
-		await mongoose.connect(connectionString || MONGO_CONNECTION_STRING)
+		await mongoose.connect(this.connectionString)
 		await this.initAccount()
+		this.defineModels()
 	}
 
 	initAccount = async () => {
@@ -29,8 +26,8 @@ export default class database {
 			password: defaultUserPassword = this.defaultUser.password
 		} = this.defaultUser
 
-		const result_a = await this.findOne('accountuser', {username: defaultUserUsername})
-		if (!result_a) {
+		const result = await this.findOne('accountuser', {username: defaultUserUsername})
+		if (!result) {
 			await this.insert('accountuser', {
 				username: defaultUserUsername,
 				password: defaultUserPassword
@@ -43,19 +40,20 @@ export default class database {
 		return this
 	}
 
-	count = (model, where) => {
-	}
+	count = (model, where) => {}
 
 	findOne = async (model, data) => {
 		return await this.models[model].findOne(data)
 	}
 
-	find = async query => {
+	findById = async (model, id) => {
+		return await this.sequelize.models[model].findById(id)
 	}
 
+	find = async query => {}
+
 	insert = async (model, data) => {
-		await new this.models[model](data)
-        .save()
+		await new this.models[model](data).save()
 	}
 
 	deleteAll = async (model, data) => {

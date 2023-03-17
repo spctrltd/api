@@ -44,13 +44,13 @@ export const httpsAgent = cert => {
 	return null
 }
 
-export const generateToken = (user, secret, expires = 24) => {
+export const generateToken = (user, secret, expireToken = 3, expireRefresh = 5) => {
 	const payload = {user}
-	const expiresAfter = moment().add(expires, 'hours')
+	const expiresAfter = moment().add(expireToken, 'minutes')
 	const expiresIn = parseInt((expiresAfter - moment()) / 1000)
 	const token = jsonwebtoken.sign(payload, secret, {expiresIn})
 
-	const refreshTokenExpiresIn = parseInt((moment().add(6, 'months') - moment()) / 1000)
+	const refreshTokenExpiresIn = parseInt((moment().add(expireRefresh, 'minutes') - moment()) / 1000)
 	const refreshToken = jsonwebtoken.sign(payload, secret, {
 		expiresIn: refreshTokenExpiresIn
 	})
@@ -66,29 +66,6 @@ export const mkdir = dirPath => {
 	}
 }
 
-const sqlWhereFromObject = where => {
-	return Object.keys(where).reduce((prev, curr) => {
-		const value = where[curr].replace(/'/g, "''")
-		return [
-			...prev,
-			`${curr} = '${value}'`
-		]
-	}, []).join(' AND ')
-}
-
-export const sqlWhere = where => {
-	let whereColumns = ''
-	if (where && typeof where === 'string') {
-		whereColumns = `WHERE ${where}`
-	}
-	
-	if (where && typeof where === 'object') {
-		whereColumns = `WHERE ${sqlWhereFromObject(where)}`
-	}
-
-	return whereColumns
-}
-
 export const readJsonFile = path => {
 	try {
 		const json = readFileSync(path, 'utf8')
@@ -102,7 +79,9 @@ export const readJsonFile = path => {
 const randomSingleDigit = () => Math.floor(Math.random() * Math.floor(10))
 
 export const generateOTP = (length = 5) => {
-	const randomArray = Buffer.allocUnsafe(length).toString('utf8', 0, length + 1).split('')
+	const randomArray = Buffer.allocUnsafe(length)
+		.toString('utf8', 0, length + 1)
+		.split('')
 	return randomArray.map(() => randomSingleDigit()).join('')
 }
 
@@ -122,7 +101,7 @@ const sequelizeOpKeys = key => {
 	const keys = {
 		$gt: Op.gt
 	}
-	if (keys.hasOwnProperty(key)) {
+	if (Object.prototype.hasOwnProperty.call(keys, key)) {
 		return keys[key]
 	}
 	return key
@@ -148,4 +127,14 @@ export const sequelizeOps = query => {
 		}
 	}
 	return query
+}
+
+export const middlewareHandler = ({ctx = {}, status = 200, body, next, isMiddleware = false}) => {
+	ctx.status = status
+	if (body) {
+		ctx.body = JSON.stringify(body)
+	}
+	if (isMiddleware && typeof next === 'function') {
+		next()
+	}
 }

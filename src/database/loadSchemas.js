@@ -9,7 +9,7 @@ const createFileList = (dataModelsPath, list = {}) => {
 	fs.readdirSync(dataModelsPath).forEach(file => {
 		if (path.extname(file).toLowerCase() === '.json') {
 			const name = path.basename(file, '.json')
-			if (!fileList.hasOwnProperty(name)) {
+			if (!Object.prototype.hasOwnProperty.call(fileList, name)) {
 				fileList[name] = `${dataModelsPath}/${file}`
 			}
 		}
@@ -18,8 +18,8 @@ const createFileList = (dataModelsPath, list = {}) => {
 }
 
 export default async (databaseType, sequelize) => {
-	let dataModels = {}
-	let dataStructures = {}
+	const dataModels = {}
+	const dataStructures = {}
 	const dataModelsPath = getAbsolutePath('./database/account')
 	let fileList = createFileList(dataModelsPath)
 	const userDataModelsPath = `${path.resolve('.')}/data-models`

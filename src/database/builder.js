@@ -1,26 +1,27 @@
-import sqlite from './database.class.sqlite.js'
-import mongodb from './database.class.mongodb.js'
+import Sqlite from './database.class.sqlite.js'
+import Mongodb from './database.class.mongodb.js'
 
-export default class database {
-	constructor(options = {}) {
-		const {type = 'sqlite'} = options
+export default class {
+	drivers = {
+		sqlite: Sqlite,
+		mongodb: Mongodb
+	}
+
+	constructor({type = 'sqlite', ...options}) {
+		this.options = options
 		this.type = type
-		this.driver = null
 	}
 
 	init = async () => {
-		switch (this.type) {
-			case 'sqlite':
-				this.driver = new sqlite()
-				break
-			case 'mongodb':
-				this.driver = new mongodb()
-				break
+		this.loadDrivers()
+		const Driver = this.drivers[this.type]
+		if (Driver) {
+			const database = new Driver(this.options)
+			return await database.connect()
 		}
-		if (this.driver) {
-			return await this.driver.connect()
-		}
+	}
 
-		return
+	loadDrivers = () => {
+		// find user defined drivers
 	}
 }

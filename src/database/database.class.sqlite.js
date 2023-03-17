@@ -2,20 +2,17 @@ import path from 'path'
 import {Sequelize} from 'sequelize'
 import {fileExists, mkdir, sequelizeOps} from '../helper.js'
 import schemaLoader from './loadSchemas.js'
+import Database from './database.class.js'
 
-const userTemplate = {
-	username: 'superuser',
-	password: 'superpassword'
-}
-
-export default class database {
+export default class extends Database {
+	type = 'sqlite'
 	constructor(options = {}) {
-		const {databaseFile, memoryOnly = false, defaultUser = userTemplate} = options
-		this.connection = null
-		this.defaultUser = defaultUser
+		super(options)
+		const {databaseFile, memoryOnly = false} = options
 		this.databaseFile = databaseFile
 		this.memoryOnly = memoryOnly
 		this.sequelize = null
+		this.models = null
 	}
 
 	init = async () => {
@@ -34,14 +31,16 @@ export default class database {
 			storage = databaseFilePath
 		}
 		this.sequelize = new Sequelize({
-			dialect: 'sqlite',
+			dialect: this.type,
 			storage
 		})
 
-		await schemaLoader('sqlite', this.sequelize)
+		await schemaLoader(this.type, this.sequelize)
 		await this.sequelize.sync()
 		// migrations
 		await this.initAccount()
+		this.models = this.sequelize.models
+		this.defineModels()
 	}
 
 	initAccount = async () => {
@@ -50,8 +49,8 @@ export default class database {
 			password: defaultUserPassword = this.defaultUser.password
 		} = this.defaultUser
 
-		const result_a = await this.findOne('accountuser', {username: defaultUserUsername})
-		if (!result_a) {
+		const result = await this.findOne('accountuser', {username: defaultUserUsername})
+		if (!result) {
 			await this.insert('accountuser', {
 				username: defaultUserUsername,
 				password: defaultUserPassword
@@ -64,14 +63,17 @@ export default class database {
 		return this
 	}
 
-	count = (model, where) => {
-	}
+	count = (model, where) => {}
 
 	findOne = async (model, data) => {
 		return await this.sequelize.models[model].findOne({where: sequelizeOps(data)})
 	}
 
-	find = async data => {
+	findById = async (model, id) => {
+		return await this.sequelize.models[model].findByPk(id)
+	}
+
+	find = async (model, data) => {
 		let where = {}
 		if (data) {
 			where = {where: sequelizeOps(data)}

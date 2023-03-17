@@ -42,7 +42,8 @@ const evalDataType = data => {
 	let dataType = data
 	if (typeof data === 'string') {
 		dataType = type(data)
-	} else if (Array.isArray(data)) { /// CHECK THIS
+	} else if (Array.isArray(data)) {
+		/// CHECK THIS
 		dataType = arrayType(data)
 	} else if (typeof data === 'object') {
 		dataType = setDataType(data)
@@ -52,13 +53,8 @@ const evalDataType = data => {
 
 const setDataType = (structure, options = {}) => {
 	if (typeof structure === 'object') {
-		const {
-			encryptPassword = false,
-			passwordField = 'password',
-			idField,
-			virtuals
-		} = options
-		
+		const {encryptPassword = false, passwordField = 'password', idField, virtuals} = options
+
 		return Object.keys(structure).reduce((acc, key) => {
 			let dataType = evalDataType(structure[key])
 			if (encryptPassword && key === passwordField) {
@@ -73,10 +69,10 @@ const setDataType = (structure, options = {}) => {
 				dataType = {
 					...dataType,
 					autoIncrement: true,
-    				primaryKey: true
+					primaryKey: true
 				}
 			}
-			if (virtuals && virtuals.hasOwnProperty(key)) {
+			if (virtuals && Object.prototype.hasOwnProperty.call(virtuals, key)) {
 				const {ref, foreignField} = virtuals[key]
 				dataType = {
 					...dataType,
@@ -96,21 +92,6 @@ const setDataType = (structure, options = {}) => {
 	return evalDataType(structure)
 }
 
-export const createSchema = (name, modelPath) => {
-	const config = readJsonFile(modelPath)
-	if (config.model) {
-		let modelStructure = setDataType(config.model)
-		const schema = new mongoose.Schema(modelStructure, {
-			timestamps: true,
-			versionKey: false,
-			collection: name
-		})
-		return schema
-	}
-
-	return null
-}
-
 export default async (name, modelPath, sequelize) => {
 	const config = readJsonFile(modelPath)
 
@@ -119,20 +100,18 @@ export default async (name, modelPath, sequelize) => {
 		if (models.includes(name)) {
 			return {model: sequelize.models[name]}
 		}
-		let modelStructure = setDataType(config.model, config.schema)
-		const {
-			timestamps = true,
-		} = config.schema || {}
+		const modelStructure = setDataType(config.model, config.schema)
+		const {timestamps = true} = config.schema || {}
 
 		const sqlModel = class extends Model {}
 
 		sqlModel.init(modelStructure, {
 			timestamps,
 			sequelize,
-  			modelName: name,
+			modelName: name,
 			freezeTableName: true
 		})
-		
+
 		return {model: sequelize.models[name]}
 	}
 

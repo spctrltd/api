@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import {readJsonFile} from '../helper.js'
+import {readJsonFile, hash} from '../helper.js'
 
 const type = name => {
 	switch (name) {
@@ -62,21 +62,6 @@ const setDataType = structure => {
 	return evalDataType(structure)
 }
 
-export const createSchema = (name, modelPath) => {
-	const config = readJsonFile(modelPath)
-	if (config.model) {
-		let modelStructure = setDataType(config.model)
-		const schema = new mongoose.Schema(modelStructure, {
-			timestamps: true,
-			versionKey: false,
-			collection: name
-		})
-		return schema
-	}
-
-	return null
-}
-
 export default (name, modelPath) => {
 	const config = readJsonFile(modelPath)
 
@@ -85,7 +70,7 @@ export default (name, modelPath) => {
 		if (models.includes(name)) {
 			return {model: mongoose.model(name)}
 		}
-		let modelStructure = setDataType(config.model)
+		const modelStructure = setDataType(config.model)
 		const {
 			timestamps = true,
 			versionKey = false,
@@ -105,7 +90,8 @@ export default (name, modelPath) => {
 		if (virtuals) {
 			Object.keys(virtuals).forEach(virtualKey => {
 				const {options, ref, localField, foreignField} = virtualKey
-				schema.virtual(localField, { // TEST !!!
+				schema.virtual(localField, {
+					// TEST !!!
 					options,
 					ref,
 					localField,
