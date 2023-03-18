@@ -9,6 +9,26 @@ import {Op} from 'sequelize'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
+const IS_SQL = Symbol('IS_SQL')
+const IS_NOT_SQL = Symbol('IS_NOT_SQL')
+const IS_MIDDLEWARE = Symbol('IS_MIDDLEWARE')
+const IS_NOT_MIDDLEWARE = Symbol('IS_NOT_MIDDLEWARE')
+const REQUIRES_CONDITION = Symbol('REQUIRES_CONDITION')
+const REQUIRES_NO_CONDITION = Symbol('REQUIRES_NO_CONDITION')
+const DATABASE_TYPE_SQLITE = Symbol('DATABASE_TYPE_SQLITE')
+const DATABASE_TYPE_MONGODB = Symbol('DATABASE_TYPE_MONGODB')
+
+export const constants = {
+	IS_SQL,
+	IS_NOT_SQL,
+	IS_MIDDLEWARE,
+	IS_NOT_MIDDLEWARE,
+	REQUIRES_CONDITION,
+	REQUIRES_NO_CONDITION,
+	DATABASE_TYPE_SQLITE,
+	DATABASE_TYPE_MONGODB
+}
+
 export const getAbsolutePath = filepath => path.join(__dirname, filepath)
 
 export const fileStat = file => {
@@ -44,7 +64,15 @@ export const httpsAgent = cert => {
 	return null
 }
 
-export const generateToken = (user, secret, expireToken = 3, expireRefresh = 5) => {
+const defaultExpireToken = 3
+const defaultExpireRefresh = 5
+
+export const generateToken = (
+	user,
+	secret,
+	expireToken = defaultExpireToken,
+	expireRefresh = defaultExpireRefresh
+) => {
 	const payload = {user}
 	const expiresAfter = moment().add(expireToken, 'minutes')
 	const expiresIn = parseInt((expiresAfter - moment()) / 1000)
@@ -95,11 +123,11 @@ export const developerPrinter = data => {
 }
 
 export const hash = value => SHA256(value).toString()
-export const hashCompare = (plainText, hashedValue) => hash(`${plainText}`) === `${hashedValue}`
+export const isSameHashed = (plainText, hashedValue) => hash(`${plainText}`) === `${hashedValue}`
 
 const sequelizeOpKeys = key => {
 	const keys = {
-		$gt: Op.gt
+		$gt: Op.gt // TODO: Add all substitutions
 	}
 	if (Object.prototype.hasOwnProperty.call(keys, key)) {
 		return keys[key]
@@ -129,12 +157,105 @@ export const sequelizeOps = query => {
 	return query
 }
 
-export const middlewareHandler = ({ctx = {}, status = 200, body, next, isMiddleware = false}) => {
+/**
+ * Format a database query condition object for safe usage if required.
+ * @function gaurdedCondition
+ * @param {object|null|undefined} [data] - Query condition.
+ * @param {symbol} [isSql] - Whether used on SQL database.
+ * @param {symbol} [requiresCondition] - Whether condition is required for safe operation.
+ * @returns {object}
+ */
+export const gaurdedCondition = (
+	data,
+	isSql = IS_NOT_SQL,
+	requiresCondition = REQUIRES_NO_CONDITION
+) => {
+	const hasNoConditions =
+		!data || (data && typeof data === 'object' && Object.keys(data).length === 0)
+	if (requiresCondition === REQUIRES_CONDITION && hasNoConditions) {
+		return false
+	}
+	let where = isSql === IS_SQL ? {} : data
+	if (data && isSql === IS_SQL) {
+		where = {where: sequelizeOps(data)}
+	}
+	return where
+}
+
+export const formatedResponse = data =>
+	JSON.stringify({
+		tag: moment().valueOf(),
+		data
+	})
+
+export const middlewareHandler = (
+	ctx = {},
+	next,
+	status = 200,
+	body,
+	handlerType = IS_NOT_MIDDLEWARE
+) => {
 	ctx.status = status
 	if (body) {
-		ctx.body = JSON.stringify(body)
+		ctx.body = ctx.helper.formatedResponse(body)
 	}
-	if (isMiddleware && typeof next === 'function') {
+	if (handlerType === IS_MIDDLEWARE && typeof next === 'function') {
 		next()
+	}
+}
+
+const defaultKey = 'ba21767ae494afe5a2165dcb3338c5323e9907050e34542c405d575cc31bf527'
+
+const defaultConfig = {
+	database: {
+		type: DATABASE_TYPE_SQLITE,
+		databaseFile: undefined,
+		memoryOnly: false,
+		defaultUser: {
+			username: 'superuser',
+			password: 'superpassword'
+		},
+		connectionString: undefined
+	},
+	server: {
+		sessionKey: defaultKey,
+		formatedResponse,
+		httpsConfig: {
+			key: undefined, // fs.readFileSync('/app/server-private-key.pem'),
+			cert: undefined // fs.readFileSync('/app/server-certificate.pem')
+		},
+		uploadDir: '/tmp/dump',
+		allowCors: false,
+		port: 8000,
+		proxy: undefined
+	},
+	service: {
+		otp: otp => developerPrinter({otp})
+	},
+	account: {
+		secretKey: defaultKey,
+		usernameField: 'username',
+		jwtExpiresInMinutes: defaultExpireToken,
+		jwtRefreshExpiresInMinutes: defaultExpireRefresh
+	},
+	system: {
+		developerPrinter
+	}
+}
+
+const generateConfig = (key, config) =>
+	Object.keys(config).reduce(
+		(cfg, currentKey) => ({...cfg, [currentKey]: config[currentKey]}),
+		defaultConfig[key]
+	)
+
+export const setConfig = (config = {}) => {
+	const {database = {}, server = {}, service = {}, account = {}, system = {}} = config
+	return {
+		database: generateConfig('database', database),
+		server: generateConfig('server', server),
+		service: generateConfig('service', service),
+		account: generateConfig('account', account),
+		system: generateConfig('system', system)
 	}
 }

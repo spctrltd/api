@@ -1,19 +1,32 @@
-const userTemplate = {
-	username: 'superuser',
-	password: 'superpassword'
-}
-
 export default class {
-	constructor(options = {}) {
-		const {databaseFile, memoryOnly = false, defaultUser = userTemplate, connectionString} = options
-		this.connection = null
+	constructor(options) {
+		const {databaseFile, memoryOnly, defaultUser, connectionString} = options
+
 		this.defaultUser = defaultUser
 		this.databaseFile = databaseFile
 		this.memoryOnly = memoryOnly
+		this.connectionString = connectionString
+
+		this.connection = null
 		this.sequelize = null
 		this.models = null
-		this.connectionString = connectionString
 		this.DBO = {}
+		this.fields = {}
+	}
+
+	initAccount = async () => {
+		const {
+			username: defaultUserUsername = this.defaultUser.username,
+			password: defaultUserPassword = this.defaultUser.password
+		} = this.defaultUser
+
+		const result = await this.findOne('accountuser', {username: defaultUserUsername})
+		if (!result) {
+			await this.insert('accountuser', {
+				username: defaultUserUsername,
+				password: defaultUserPassword
+			})
+		}
 	}
 
 	defineModels = () => {
@@ -24,7 +37,6 @@ export default class {
 				findById: id => this.findById(model, id),
 				find: data => this.find(model, data),
 				insert: data => this.insert(model, data),
-				deleteAll: () => this.deleteAll(model),
 				delete: data => this.delete(model, data)
 			}
 		})

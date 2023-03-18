@@ -89,9 +89,9 @@ export default (name, modelPath) => {
 
 		if (virtuals) {
 			Object.keys(virtuals).forEach(virtualKey => {
-				const {options, ref, localField, foreignField} = virtualKey
+				const {options, ref, localField, foreignField} = virtuals[virtualKey]
 				schema.virtual(localField, {
-					// TEST !!!
+					// TODO: TEST POPULATE !!!
 					options,
 					ref,
 					localField,
@@ -112,7 +112,7 @@ export default (name, modelPath) => {
 			})
 		}
 
-		return {model: mongoose.model(name, schema)}
+		return {model: mongoose.model(name, schema), fields: Object.keys(config.model)}
 	}
 
 	return null

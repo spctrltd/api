@@ -15,22 +15,23 @@ import {
 	mkdir,
 	generateToken,
 	generateOTP,
-	developerPrinter,
 	middlewareHandler,
-	hashCompare
+	isSameHashed,
+	constants,
+	setConfig
 } from './helper.js'
 import authentication from './authentication.js'
 import routeBuilder from './route/builder.js'
 import DatabaseBuilder from './database/builder.js'
 
-const {APP_PORT = 8000} = process.env
-const defaultKey = 'ba21767ae494afe5a2165dcb3338c5323e9907050e34542c405d575cc31bf527'
-
 export default class {
+	static DATABASE_TYPE_SQLITE = constants.DATABASE_TYPE_SQLITE
+	static DATABASE_TYPE_MONGODB = constants.DATABASE_TYPE_MONGODB
 	server = new Koa()
 	router = new KoaRouter()
 	constructor(config) {
-		this.config = config || {database: {}, server: {}, system: {}}
+		this.config = setConfig(config)
+		this.isConfigured = false
 	}
 
 	configureDatabase = async () => {
@@ -40,13 +41,7 @@ export default class {
 	}
 
 	configureServer = () => {
-		const {
-			httpsConfig = {},
-			uploadDir = '/tmp/dump',
-			allowCors = false,
-			proxy,
-			sessionKey = defaultKey
-		} = this.config.server
+		const {httpsConfig, uploadDir, allowCors, proxy, sessionKey} = this.config.server
 		if (allowCors) {
 			this.server.use(Cors())
 		}
@@ -70,26 +65,28 @@ export default class {
 	}
 
 	configureHelpers = () => {
-		const {otpService = otp => developerPrinter({otp})} = this.config.system
-		const {sessionKey = defaultKey} = this.config.server
-		const {secretKey = defaultKey} = this.config.server
+		const {otp} = this.config.service
+		const {sessionKey, formatedResponse} = this.config.server
+		const {secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, usernameField} =
+			this.config.account
 		this.server.context.helper = {
 			getAbsolutePath,
 			fileExists,
 			directoryExists,
 			readJsonFile,
 			mkdir,
-			developerPrinter,
-			middlewareHandler
+			developerPrinter: this.config.system.developerPrinter,
+			middlewareHandler,
+			...constants,
+			formatedResponse
 		}
 		this.server.context.authentication = {
-			hashCompare,
+			isSameHashed,
 			generateToken,
 			generateOTP,
-			developerPrinter,
-			otpService,
+			otpService: otp,
 			sessionKey,
-			...authentication({secretKey})
+			...authentication({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, usernameField})
 		}
 	}
 
@@ -110,18 +107,23 @@ export default class {
 		this.configureServer()
 		this.configureRouter()
 		this.configureAuthentication()
+		this.isConfigured = true
 	}
 
 	start = async () => {
-		const {httpsConfig = {}} = this.config.server
+		if (!this.isConfigured) {
+			await this.configure()
+		}
+		const {httpsConfig, port} = this.config.server
+		const {developerPrinter} = this.config.system
 
 		const {cert: httpsConfigCert} = httpsConfig
 		if (httpsConfigCert) {
 			developerPrinter({httpStarted: true})
-			https.createServer(httpsConfig, this.server.callback()).listen(APP_PORT)
+			https.createServer(httpsConfig, this.server.callback()).listen(port)
 		} else {
 			developerPrinter({httpStarted: true})
-			this.server.listen(APP_PORT)
+			this.server.listen(port)
 		}
 	}
 }

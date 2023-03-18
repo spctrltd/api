@@ -5,7 +5,7 @@ import moment from 'moment'
 
 const responseTemplate = {status: 200, body: null}
 
-export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes}) => {
+export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, usernameField}) => {
 	const getUser = async (user, accountuser) => {
 		const username = user.includes('@') ? 'email' : 'username'
 		const data = await accountuser.findOne({[username]: user})
@@ -34,23 +34,22 @@ export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes}) =>
 		new LocalStrategy(
 			{
 				passReqToCallback: true,
-				usernameField: 'username'
+				usernameField
 			},
 			async (req, username, password, done) => {
 				const {
 					request,
 					DBO: {accountotp, accountuser},
-					authentication: {hashCompare}
+					authentication: {isSameHashed}
 				} = req.ctx
-				const {sendOtp: otpInit, otp} = request.body
+				const {otp} = request.body
 				const user = username.replace(/\s/g, '')
-				const sendOtp = otpInit === true
 
 				const doc = await getUser(user, accountuser)
 				const otpDoc = otp ? await getOtp(doc ? doc.id : null, accountotp) : null
-				const otpFailure = otp && (!otpDoc || !hashCompare(otp, otpDoc.otp))
-				const passwordFailure = !otp && !sendOtp && doc && !hashCompare(password, doc.password)
-				if (!doc || passwordFailure || otpFailure) {
+				const isOtpFailure = otp && (!otpDoc || !isSameHashed(otp, otpDoc.otp))
+				const isPasswordFailure = doc && !isSameHashed(password, doc.password)
+				if (!doc || isPasswordFailure || isOtpFailure) {
 					return done(null, false)
 				}
 				if (otpDoc) {

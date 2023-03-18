@@ -112,7 +112,7 @@ export default async (name, modelPath, sequelize) => {
 			freezeTableName: true
 		})
 
-		return {model: sequelize.models[name]}
+		return {model: sequelize.models[name], fields: Object.keys(config.model)}
 	}
 
 	return null

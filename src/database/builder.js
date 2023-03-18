@@ -1,13 +1,16 @@
 import Sqlite from './database.class.sqlite.js'
 import Mongodb from './database.class.mongodb.js'
+import {constants} from '../helper.js'
+
+const {DATABASE_TYPE_SQLITE, DATABASE_TYPE_MONGODB} = constants
 
 export default class {
 	drivers = {
-		sqlite: Sqlite,
-		mongodb: Mongodb
+		[DATABASE_TYPE_SQLITE]: Sqlite,
+		[DATABASE_TYPE_MONGODB]: Mongodb
 	}
 
-	constructor({type = 'sqlite', ...options}) {
+	constructor({type, ...options}) {
 		this.options = options
 		this.type = type
 	}
@@ -22,6 +25,6 @@ export default class {
 	}
 
 	loadDrivers = () => {
-		// find user defined drivers
+		// TODO: find user defined drivers
 	}
 }

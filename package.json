@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "description": "general http api",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "doc": "jsdoc"
+  },
   "author": "Charles Johannisen, SPCTR",
   "license": "ISC",
   "type": "module",
@@ -16,6 +18,7 @@
     "eslint-plugin-n": "^15.6.1",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-promise": "^6.1.1",
+    "jsdoc": "^4.0.2",
     "prettier": "^2.8.4"
   },
   "dependencies": {

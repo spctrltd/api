@@ -1,3 +1,3 @@
 export default async ctx => {
-	ctx.body = JSON.stringify({session: ':)'})
+	ctx.body = ctx.helper.formatedResponse({session: ':)'})
 }

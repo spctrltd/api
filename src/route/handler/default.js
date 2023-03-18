@@ -1,3 +1,3 @@
 export default async ctx => {
-	ctx.body = JSON.stringify({hello: ':)'})
+	ctx.body = ctx.helper.formatedResponse({hello: ':)'})
 }
