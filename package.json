@@ -4,7 +4,8 @@
   "description": "general http api",
   "main": "index.js",
   "scripts": {
-    "doc": "jsdoc"
+    "doc": "jsdoc",
+    "publish": "sh ./publish.sh"
   },
   "author": "Charles Johannisen, SPCTR",
   "license": "ISC",
@@ -37,5 +38,9 @@
     "passport-local": "^1.0.0",
     "sequelize": "^6.29.3",
     "sqlite3": "^5.1.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/spctrltd/api.git"
   }
 }
