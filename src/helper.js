@@ -1,4 +1,4 @@
-import {stat, mkdirSync, readFileSync} from 'fs'
+import {stat, mkdirSync, readFileSync, readdirSync, readSync, openSync, closeSync} from 'fs'
 import https from 'https'
 import moment from 'moment'
 import jsonwebtoken from 'jsonwebtoken'
@@ -17,6 +17,8 @@ const REQUIRES_CONDITION = Symbol('REQUIRES_CONDITION')
 const REQUIRES_NO_CONDITION = Symbol('REQUIRES_NO_CONDITION')
 const DATABASE_TYPE_SQLITE = Symbol('DATABASE_TYPE_SQLITE')
 const DATABASE_TYPE_MONGODB = Symbol('DATABASE_TYPE_MONGODB')
+const FILE_NAME_AS_KEY = Symbol('FILE_NAME_AS_KEY')
+const FILE_PATH_AS_KEY = Symbol('FILE_PATH_AS_KEY')
 
 export const constants = {
 	IS_SQL,
@@ -26,7 +28,9 @@ export const constants = {
 	REQUIRES_CONDITION,
 	REQUIRES_NO_CONDITION,
 	DATABASE_TYPE_SQLITE,
-	DATABASE_TYPE_MONGODB
+	DATABASE_TYPE_MONGODB,
+	FILE_NAME_AS_KEY,
+	FILE_PATH_AS_KEY
 }
 
 export const getAbsolutePath = filepath => path.join(__dirname, filepath)
@@ -104,6 +108,19 @@ export const readJsonFile = path => {
 	}
 }
 
+const readLine = (path, readNumberOfBytes = 1) => {
+	const fd = openSync(path, 'r')
+	const buffer = Buffer.alloc(readNumberOfBytes)
+	readSync(fd, buffer, 0, readNumberOfBytes, null)
+	closeSync(fd)
+	return buffer.toString('utf8', 0, readNumberOfBytes)
+}
+
+export const isJsonArrayFile = path => {
+	const data = readLine(path)
+	return data.trim().substring(0, 1) === '['
+}
+
 const randomSingleDigit = () => Math.floor(Math.random() * Math.floor(10))
 
 export const generateOTP = (length = 5) => {
@@ -127,7 +144,74 @@ export const isSameHashed = (plainText, hashedValue) => hash(`${plainText}`) ===
 
 const sequelizeOpKeys = key => {
 	const keys = {
-		$gt: Op.gt // TODO: Add all substitutions
+		// Comparison
+		$eq: Op.eq,
+		$ne: Op.ne,
+		$gt: Op.gt,
+		$gte: Op.gte,
+		$in: Op.in,
+		$nin: Op.notIn,
+		$lt: Op.lt,
+		$lte: Op.lte,
+		// Logical
+		$and: Op.and,
+		$not: Op.not,
+		$or: Op.or,
+		// Evaluation
+		$regex: Op.regexp
+	}
+	const incompatibleKeys = [
+		'$nor',
+		'$exists',
+		'$type',
+		'$expr',
+		'$jsonSchema',
+		'$mod',
+		'$text',
+		'$where',
+		'$geoIntersects',
+		'$geoWithin',
+		'$near',
+		'$nearSphere',
+		'$box',
+		'$center',
+		'$centerSphere',
+		'$geometry',
+		'$maxDistance',
+		'$minDistance',
+		'$polygon',
+		'$elemMatch',
+		'$size',
+		'$bitsAllClear',
+		'$bitsAllSet',
+		'$bitsAnyClear',
+		'$bitsAnySet',
+		'$slice',
+		'$comment',
+		'$rand',
+		'$natural',
+		'$currentDate',
+		'$inc',
+		'$min',
+		'$max',
+		'$mul',
+		'$rename',
+		'$set',
+		'$setOnInsert',
+		'$unset',
+		'$addToSet',
+		'$pop',
+		'$pull',
+		'$push',
+		'$pullAll',
+		'$each',
+		'$position',
+		'$slice',
+		'$sort',
+		'$bit'
+	]
+	if (incompatibleKeys.includes(key) || key.includes('.$')) {
+		throw Error(`This operator is not compatible with SQL: ${key}`)
 	}
 	if (Object.prototype.hasOwnProperty.call(keys, key)) {
 		return keys[key]
@@ -258,4 +342,35 @@ export const setConfig = (config = {}) => {
 		account: generateConfig('account', account),
 		system: generateConfig('system', system)
 	}
+}
+
+/**
+ * Create an array of absolute file paths.
+ *
+ * @function createFileList
+ * @param {String} directoryPath - The absolute path to directory.
+ * @param {Array} extensions - An array will file extensions to include. Empty array includes all.
+ * @param {Object} list - An exting list object to concatenate.
+ * @returns {Object}
+ */
+export const createFileList = (
+	directoryPath,
+	extensions = [],
+	keyValue = FILE_NAME_AS_KEY,
+	list = {}
+) => {
+	const fileList = {...list}
+	readdirSync(directoryPath).forEach(file => {
+		const includeAll = extensions.length === 0
+		const extensionName = path.extname(file).toLowerCase()
+		if (includeAll || extensions.includes(extensionName)) {
+			const name = path.basename(file, extensionName)
+			const filePath = `${directoryPath}/${file}`
+			const key = keyValue === FILE_NAME_AS_KEY ? name : filePath
+			if (!Object.prototype.hasOwnProperty.call(fileList, name)) {
+				fileList[key] = filePath
+			}
+		}
+	})
+	return fileList
 }

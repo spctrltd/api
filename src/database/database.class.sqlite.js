@@ -6,7 +6,19 @@ import Database from './database.class.js'
 
 const {IS_SQL, REQUIRES_CONDITION, DATABASE_TYPE_SQLITE} = constants
 
+/**
+ * Database class
+ *
+ * @class
+ * @classdesc SQLite class
+ */
 export default class extends Database {
+	/**
+	 * Configure, build models and intialise connection.
+	 *
+	 * @async
+	 * @function init
+	 */
 	init = async () => {
 		let storage = ':memory:'
 		if (!this.memoryOnly) {
@@ -36,32 +48,146 @@ export default class extends Database {
 		this.defineModels()
 	}
 
+	/**
+	 * Connection facade.
+	 *
+	 * @async
+	 * @function connect
+	 * @returns {Promise<Database>}
+	 */
 	connect = async () => {
 		await this.init()
 		return this
 	}
 
+	/**
+	 * Count rows.
+	 *
+	 * @async
+	 * @function count
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @returns {Promise<Number>}
+	 */
 	count = async (model, data) => {
-		return await this.sequelize.models[model].count(gaurdedCondition(data, IS_SQL))
+		const number = await this.sequelize.models[model].count(gaurdedCondition(data, IS_SQL))
+		return parseInt(number)
 	}
 
+	/**
+	 * Find one row.
+	 *
+	 * @async
+	 * @function findOne
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @returns {Promise<Object>}
+	 */
 	findOne = async (model, data) => {
 		return await this.sequelize.models[model].findOne(gaurdedCondition(data, IS_SQL))
 	}
 
+	/**
+	 * Find one row by its Id.
+	 *
+	 * @async
+	 * @function findById
+	 * @param {String} model - Name of the database model.
+	 * @param {String|Number} id - An integer or string that specifies the row Id.
+	 * @returns {Promise<Object>}
+	 */
 	findById = async (model, id) => {
 		return await this.sequelize.models[model].findByPk(id)
 	}
 
+	/**
+	 * Find one or more rows.
+	 * @function find
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @returns {Promise<Array>}
+	 */
 	find = async (model, data) => {
 		return await this.sequelize.models[model].findAll(gaurdedCondition(data, IS_SQL))
 	}
 
+	/**
+	 * Insert a row.
+	 *
+	 * @async
+	 * @function insert
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} data - An object that specifies the row contents.
+	 * @returns {Promise<Object>}
+	 */
 	insert = async (model, data) => {
-		await this.sequelize.models[model].create(data)
+		return await this.sequelize.models[model].create(data)
 	}
 
-	delete = async (model, data) => {
-		await this.sequelize.models[model].destroy(gaurdedCondition(data, IS_SQL, REQUIRES_CONDITION))
+	/**
+	 * Update one row.
+	 *
+	 * @async
+	 * @function updateOne
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @param {Object} data - An object that specifies the row contents.
+	 * @returns {Promise<Number>}
+	 */
+	updateOne = async (model, where, data) => {
+		const {affectedCount} = await this.sequelize.models[model].update(data, {
+			...gaurdedCondition(where, IS_SQL),
+			limit: 1
+		})
+		return parseInt(affectedCount)
+	}
+
+	/**
+	 * Update one or more rows.
+	 *
+	 * @async
+	 * @function update
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @param {Object} data - An object that specifies the row contents.
+	 * @returns {Promise<Number>}
+	 */
+	update = async (model, where, data) => {
+		const {affectedCount} = await this.sequelize.models[model].update(
+			data,
+			gaurdedCondition(where, IS_SQL)
+		)
+		return parseInt(affectedCount)
+	}
+
+	/**
+	 * Update or Insert a row.
+	 *
+	 * @async
+	 * @function upsert
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @param {Object} data - An object that specifies the row contents.
+	 * @returns {Promise<Object>}
+	 */
+	upsert = async (model, where, data) => {
+		await this.sequelize.models[model].upsert(data, gaurdedCondition(where, IS_SQL))
+		return await this.findOne(model, where)
+	}
+
+	/**
+	 * Delete a row.
+	 *
+	 * @async
+	 * @function delete
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @returns {Promise<Number>}
+	 */
+	delete = async (model, where) => {
+		const number = await this.sequelize.models[model].destroy(
+			gaurdedCondition(where, IS_SQL, REQUIRES_CONDITION)
+		)
+		return parseInt(number)
 	}
 }

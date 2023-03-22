@@ -1,6 +1,13 @@
 import mongoose from 'mongoose'
 import {readJsonFile, hash} from '../helper.js'
 
+/**
+ * Evaluates string to determine Database data type.
+ *
+ * @function arrayType
+ * @param {String} name - A data type name.
+ * @returns {Object|null}
+ */
 const type = name => {
 	switch (name) {
 		case 'String':
@@ -20,6 +27,13 @@ const type = name => {
 	}
 }
 
+/**
+ * Evaluates JS array type to determine Database Array type.
+ *
+ * @function arrayType
+ * @param {Array} data - An Array to evaluate.
+ * @returns {Array|null}
+ */
 const arrayType = data => {
 	if (Array.isArray(data)) {
 		let dataType = null
@@ -36,6 +50,13 @@ const arrayType = data => {
 	return null
 }
 
+/**
+ * Evaluates JS data type to determine Database data type.
+ *
+ * @function evalDataType
+ * @param {Object|String|Array|null} data - A type to evaluate.
+ * @returns {Object|String|Array|null}
+ */
 const evalDataType = data => {
 	let dataType = data
 	if (typeof data === 'string') {
@@ -48,6 +69,13 @@ const evalDataType = data => {
 	return dataType === null ? data : dataType
 }
 
+/**
+ * Iterates over JS datatypes to find database data types.
+ *
+ * @function setDataType
+ * @param {Object|String|Array|null} structure - A type to evaluate.
+ * @returns {Object|String|Array|null}
+ */
 const setDataType = structure => {
 	if (typeof structure === 'object') {
 		return Object.keys(structure).reduce((acc, key) => {
@@ -62,6 +90,13 @@ const setDataType = structure => {
 	return evalDataType(structure)
 }
 
+/**
+ * Load config file and build a database model.
+ *
+ * @param {String} name - The model name.
+ * @param {String} modelPath - Absolute path to the model config file.
+ * @returns {Object}
+ */
 export default (name, modelPath) => {
 	const config = readJsonFile(modelPath)
 

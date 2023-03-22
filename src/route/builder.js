@@ -1,9 +1,26 @@
-import {extname, resolve} from 'path'
-import {readdirSync} from 'fs'
-import {directoryExists, getAbsolutePath, readJsonFile, fileExists} from '../helper.js'
+import {resolve} from 'path'
+import {
+	directoryExists,
+	getAbsolutePath,
+	readJsonFile,
+	fileExists,
+	createFileList,
+	isJsonArrayFile,
+	constants
+} from '../helper.js'
 
 const AsyncFunction = async function () {}.constructor
 
+/**
+ * Opens and reads in JSON config file.
+ *
+ * @async
+ * @function getMiddleware
+ * @param {String} middlewarePath - Absolute path to directory.
+ * @param {String} middlewareName - Name of file.
+ * @param {Boolean} middlewarePathExists - Does directory exist.
+ * @returns {Promise<Function|null>}
+ */
 const getMiddleware = async (middlewarePath, middlewareName, middlewarePathExists) => {
 	if (middlewareName && middlewarePathExists) {
 		const middlewareFilePath = `${middlewarePath}/${middlewareName}.js`
@@ -22,24 +39,26 @@ const getMiddleware = async (middlewarePath, middlewareName, middlewarePathExist
 	return null
 }
 
+/**
+ * Opens and reads in JSON config file.
+ *
+ * @async
+ * @function createConfigList
+ * @param {String} routePath - Absolute path to directory.
+ * @param {Object} [list] - A previous config to merge.
+ * @returns {Promise<Object>}
+ */
 const createConfigList = async (routePath, list = {}) => {
 	const configPath = `${routePath}/config`
 	const handlerPath = `${routePath}/handler`
 	const middlewarePath = `${routePath}/middleware`
 	const handlerPathExists = await directoryExists(handlerPath)
 	const middlewarePathExists = await directoryExists(middlewarePath)
-	const fileList = readdirSync(configPath)
-	const configDataList = fileList
-		.map(file => {
-			if (extname(file).toLowerCase() === '.json') {
-				const configData = readJsonFile(`${configPath}/${file}`)
-				if (Array.isArray(configData)) {
-					return configData
-				}
-			}
-			return null
-		})
-		.filter(configData => configData !== null)
+	const fileList = createFileList(configPath, ['.json'], constants.FILE_NAME_AS_KEY)
+
+	const configDataList = Object.values(fileList)
+		.filter(file => isJsonArrayFile(file))
+		.map(file => readJsonFile(file))
 		.reduce((prev, cur) => [...prev, ...cur], [])
 
 	const configList = configDataList.reduce(async (configered, config) => {
@@ -70,6 +89,12 @@ const createConfigList = async (routePath, list = {}) => {
 	return configList
 }
 
+/**
+ * Find, load and build routes from config files.
+ *
+ * @async
+ * @param {KoaRouter} router - KoaRouter instance.
+ */
 export default async router => {
 	const routePath = getAbsolutePath('./route')
 	let configList = await createConfigList(routePath)

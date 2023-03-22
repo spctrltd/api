@@ -4,6 +4,12 @@ import {constants} from '../helper.js'
 
 const {DATABASE_TYPE_SQLITE, DATABASE_TYPE_MONGODB} = constants
 
+/**
+ * Database Builder class
+ *
+ * @class
+ * @classdesc Builds a specific database based on type value passed
+ */
 export default class {
 	drivers = {
 		[DATABASE_TYPE_SQLITE]: Sqlite,

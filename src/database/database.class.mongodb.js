@@ -5,7 +5,19 @@ import {gaurdedCondition, constants} from '../helper.js'
 
 const {REQUIRES_CONDITION, DATABASE_TYPE_MONGODB, IS_NOT_SQL} = constants
 
+/**
+ * Database class
+ *
+ * @class
+ * @classdesc MongoDB class
+ */
 export default class extends Database {
+	/**
+	 * Configure, build models and intialise connection.
+	 *
+	 * @async
+	 * @function init
+	 */
 	init = async () => {
 		const {models, fields} = await schemaLoader(DATABASE_TYPE_MONGODB)
 		this.models = models
@@ -15,32 +27,140 @@ export default class extends Database {
 		this.defineModels()
 	}
 
+	/**
+	 * Connection facade.
+	 *
+	 * @async
+	 * @function connect
+	 * @returns {Promise<Database>}
+	 */
 	connect = async () => {
 		await this.init()
 		return this
 	}
 
+	/**
+	 * Count documents.
+	 *
+	 * @async
+	 * @function count
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @returns {Promise<Number>}
+	 */
 	count = async (model, where) => {
-		return await this.models[model].countDocuments(where)
+		const number = await this.models[model].estimatedDocumentCount(where)
+		return parseInt(number)
 	}
 
-	findOne = async (model, data) => {
-		return await this.models[model].findOne(data)
+	/**
+	 * Find one document.
+	 *
+	 * @async
+	 * @function findOne
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @returns {Promise<Object>}
+	 */
+	findOne = async (model, where) => {
+		return await this.models[model].findOne(where)
 	}
 
+	/**
+	 * Find one document by its Id.
+	 *
+	 * @async
+	 * @function findById
+	 * @param {String} model - Name of the database model.
+	 * @param {String|ObjectId} id - An object or string that specifies the document Id.
+	 * @returns {Promise<Object>}
+	 */
 	findById = async (model, id) => {
 		return await this.models[model].findById(id)
 	}
 
-	find = async (model, data) => {
-		return await this.models[model].find(data)
+	/**
+	 * Find one or more documents.
+	 * @function find
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @returns {Promise<Array>}
+	 */
+	find = async (model, where) => {
+		return await this.models[model].find(where)
 	}
 
+	/**
+	 * Insert a document.
+	 *
+	 * @async
+	 * @function insert
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} data - An object that specifies the document contents.
+	 * @returns {Promise<Object>}
+	 */
 	insert = async (model, data) => {
-		await new this.models[model](data).save()
+		return await new this.models[model](data).save()
 	}
 
-	delete = async (model, data) => {
-		await this.models[model].deleteMany(gaurdedCondition(data, IS_NOT_SQL, REQUIRES_CONDITION))
+	/**
+	 * Update one document.
+	 *
+	 * @async
+	 * @function updateOne
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @param {Object} data - An object that specifies the document contents.
+	 * @returns {Promise<Number>}
+	 */
+	updateOne = async (model, where, data) => {
+		const {matchedCount} = await this.models[model].updateOne(where, data)
+		return parseInt(matchedCount)
+	}
+
+	/**
+	 * Update one or more documents.
+	 *
+	 * @async
+	 * @function update
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @param {Object} data - An object that specifies the document contents.
+	 * @returns {Promise<Number>}
+	 */
+	update = async (model, where, data) => {
+		const {matchedCount} = await this.models[model].updateMany(where, data)
+		return parseInt(matchedCount)
+	}
+
+	/**
+	 * Update or Insert a document.
+	 *
+	 * @async
+	 * @function upsert
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @param {Object} data - An object that specifies the document contents.
+	 * @returns {Promise<Object>}
+	 */
+	upsert = async (model, where, data) => {
+		await this.models[model].updateOne(where, data, {upsert: true})
+		return await this.findOne(model, where)
+	}
+
+	/**
+	 * Delete a document.
+	 *
+	 * @async
+	 * @function delete
+	 * @param {String} model - Name of the database model.
+	 * @param {Object} where - An object that specifies filter parameters.
+	 * @returns {Promise<Number>}
+	 */
+	delete = async (model, where) => {
+		const {deletedCount} = await this.models[model].deleteMany(
+			gaurdedCondition(where, IS_NOT_SQL, REQUIRES_CONDITION)
+		)
+		return parseInt(deletedCount)
 	}
 }
