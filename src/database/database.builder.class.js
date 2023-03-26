@@ -7,7 +7,7 @@ const {DATABASE_TYPE_SQLITE, DATABASE_TYPE_MONGODB} = constants
 /**
  * Database Builder class
  *
- * @class
+ * @class DatabaseBuilder
  * @classdesc Builds a specific database based on type value passed
  */
 export default class {
@@ -21,6 +21,14 @@ export default class {
 		this.type = type
 	}
 
+	/**
+	 * Initialise database connection.
+	 *
+	 * @memberof DatabaseBuilder
+	 * @async
+	 * @function init
+	 * @returns {Promise<Database|null>}
+	 */
 	init = async () => {
 		this.loadDrivers()
 		const Driver = this.drivers[this.type]
@@ -28,8 +36,16 @@ export default class {
 			const database = new Driver(this.options)
 			return await database.connect()
 		}
+
+		return null
 	}
 
+	/**
+	 * Load user-defined drivers.
+	 *
+	 * @memberof DatabaseBuilder
+	 * @function loadDrivers
+	 */
 	loadDrivers = () => {
 		// TODO: find user defined drivers
 	}

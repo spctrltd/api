@@ -31,11 +31,5 @@
 				}
 			}
 		}
-	},
-	{
-		"method": "GET",
-		"path": "/session/user/:id",
-		"middleware": "session",
-		"handler": "session"
 	}
 ]

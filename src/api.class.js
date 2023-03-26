@@ -24,8 +24,14 @@ import {
 } from './helper.js'
 import authentication from './authentication.js'
 import routeBuilder from './route/builder.js'
-import DatabaseBuilder from './database/builder.js'
+import DatabaseBuilder from './database/database.builder.class.js'
 
+/**
+ * Api class
+ *
+ * @class Api
+ * @classdesc Initialises the Api server.
+ */
 export default class {
 	static DATABASE_TYPE_SQLITE = constants.DATABASE_TYPE_SQLITE
 	static DATABASE_TYPE_MONGODB = constants.DATABASE_TYPE_MONGODB
@@ -144,6 +150,13 @@ export default class {
 			DBO: this.server.context.DBO,
 			test: this.server.context.test,
 			port: this.config.server.port
+		}
+	}
+
+	stop = (exit = constants.DONT_SHUTDOWN_SERVER) => {
+		this.server.context.database.disconnect()
+		if (exit === constants.SHUTDOWN_SERVER) {
+			process.exit(0)
 		}
 	}
 }

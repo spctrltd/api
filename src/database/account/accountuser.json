@@ -14,5 +14,38 @@
   "schema": {
     "encryptPassword": true,
     "idField": "id"
+  },
+  "test": {
+    "001": {
+      "label": "Log In with just username and password",
+      "success": {
+        "insert": {
+          "payload": {
+            "username": "superuser",
+            "password": "superpassword",
+            "email": "user@test.com"
+          },
+          "response": {
+            "username": "superuser",
+            "password": "superpassword",
+            "email": "user@test.com"
+          }
+        }
+      },
+      "failure": {
+        "insert": {
+          "payload": {
+            "user_name": "superuser",
+            "password": "superpassword",
+            "email": "user@test.com"
+          },
+          "response": {
+            "username": "superuser",
+            "password": "superpassword",
+            "email": "user@test.com"
+          }
+        }
+      }
+    }
   }
 }

@@ -22,6 +22,8 @@ const FILE_NAME_AS_KEY = Symbol('FILE_NAME_AS_KEY')
 const FILE_PATH_AS_KEY = Symbol('FILE_PATH_AS_KEY')
 const REPLACE_KEY = Symbol('REPLACE_KEY')
 const REPLACE_VALUE = Symbol('REPLACE_VALUE')
+const SHUTDOWN_SERVER = Symbol('SHUTDOWN_SERVER')
+const DONT_SHUTDOWN_SERVER = Symbol('DONT_SHUTDOWN_SERVER')
 
 /**
  * Api constants.
@@ -40,7 +42,9 @@ export const constants = {
 	FILE_NAME_AS_KEY,
 	FILE_PATH_AS_KEY,
 	REPLACE_KEY,
-	REPLACE_VALUE
+	REPLACE_VALUE,
+	SHUTDOWN_SERVER,
+	DONT_SHUTDOWN_SERVER
 }
 
 /**
@@ -513,6 +517,9 @@ const defaultConfig = {
 	},
 	system: {
 		developerPrinter
+	},
+	test: {
+		shutdown: false
 	}
 }
 
@@ -574,13 +581,14 @@ const generateConfig = (key, config) => {
  * @returns {Object}
  */
 export const setConfig = (config = {}) => {
-	const {database = {}, server = {}, service = {}, account = {}, system = {}} = config
+	const {database = {}, server = {}, service = {}, account = {}, system = {}, test = {}} = config
 	return {
 		database: generateConfig('database', database),
 		server: generateConfig('server', server),
 		service: generateConfig('service', service),
 		account: generateConfig('account', account),
-		system: generateConfig('system', system)
+		system: generateConfig('system', system),
+		test: generateConfig('test', test)
 	}
 }
 

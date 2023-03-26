@@ -23,6 +23,7 @@ export default class {
 	/**
 	 * Runs data population and migration operations.
 	 *
+	 * @memberof Database
 	 * @async
 	 * @function initAccount
 	 */
@@ -44,6 +45,7 @@ export default class {
 	/**
 	 * Make model functions accessible as property of model.
 	 *
+	 * @memberof Database
 	 * @function defineModels
 	 * @example
 	 * this.DBO.model.count()

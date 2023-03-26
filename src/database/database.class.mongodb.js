@@ -42,6 +42,17 @@ export default class extends Database {
 	}
 
 	/**
+	 * End connection.
+	 *
+	 * @memberof MongoDatabase
+	 * @async
+	 * @function connect
+	 */
+	disconnect = async () => {
+		await mongoose.disconnect()
+	}
+
+	/**
 	 * Count documents.
 	 *
 	 * @memberof MongoDatabase

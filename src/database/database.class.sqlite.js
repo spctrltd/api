@@ -16,6 +16,7 @@ export default class extends Database {
 	/**
 	 * Configure, build models and intialise connection.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function init
 	 */
@@ -51,6 +52,7 @@ export default class extends Database {
 	/**
 	 * Connection facade.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function connect
 	 * @returns {Promise<Database>}
@@ -61,8 +63,20 @@ export default class extends Database {
 	}
 
 	/**
+	 * End connection.
+	 *
+	 * @memberof SQLiteDatabase
+	 * @async
+	 * @function disconnect
+	 */
+	disconnect = async () => {
+		await this.sequelize.close()
+	}
+
+	/**
 	 * Count rows.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function count
 	 * @param {String} model - Name of the database model.
@@ -77,6 +91,7 @@ export default class extends Database {
 	/**
 	 * Find one row.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function findOne
 	 * @param {String} model - Name of the database model.
@@ -90,6 +105,7 @@ export default class extends Database {
 	/**
 	 * Find one row by its Id.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function findById
 	 * @param {String} model - Name of the database model.
@@ -102,6 +118,8 @@ export default class extends Database {
 
 	/**
 	 * Find one or more rows.
+	 *
+	 * @memberof SQLiteDatabase
 	 * @function find
 	 * @param {String} model - Name of the database model.
 	 * @param {Object} where - An object that specifies filter parameters.
@@ -114,6 +132,7 @@ export default class extends Database {
 	/**
 	 * Insert a row.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function insert
 	 * @param {String} model - Name of the database model.
@@ -127,6 +146,7 @@ export default class extends Database {
 	/**
 	 * Update one row.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function updateOne
 	 * @param {String} model - Name of the database model.
@@ -145,6 +165,7 @@ export default class extends Database {
 	/**
 	 * Update one or more rows.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function update
 	 * @param {String} model - Name of the database model.
@@ -163,6 +184,7 @@ export default class extends Database {
 	/**
 	 * Update or Insert a row.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function upsert
 	 * @param {String} model - Name of the database model.
@@ -178,6 +200,7 @@ export default class extends Database {
 	/**
 	 * Delete a row.
 	 *
+	 * @memberof SQLiteDatabase
 	 * @async
 	 * @function delete
 	 * @param {String} model - Name of the database model.

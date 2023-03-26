@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "doc": "jsdoc -c jsdoc-config.json -t node_modules/clean-jsdoc-theme",
-    "publish": "sh ./publish.sh",
-    "test": "node ./src/test.js"
+    "publish": "sh ./publish.sh"
   },
   "author": "Charles Johannisen, SPCTR",
   "license": "ISC",
