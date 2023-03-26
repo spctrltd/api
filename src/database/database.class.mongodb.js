@@ -8,13 +8,14 @@ const {REQUIRES_CONDITION, DATABASE_TYPE_MONGODB, IS_NOT_SQL} = constants
 /**
  * Database class
  *
- * @class
+ * @class MongoDatabase
  * @classdesc MongoDB class
  */
 export default class extends Database {
 	/**
 	 * Configure, build models and intialise connection.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function init
 	 */
@@ -30,6 +31,7 @@ export default class extends Database {
 	/**
 	 * Connection facade.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function connect
 	 * @returns {Promise<Database>}
@@ -42,6 +44,7 @@ export default class extends Database {
 	/**
 	 * Count documents.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function count
 	 * @param {String} model - Name of the database model.
@@ -56,6 +59,7 @@ export default class extends Database {
 	/**
 	 * Find one document.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function findOne
 	 * @param {String} model - Name of the database model.
@@ -69,6 +73,7 @@ export default class extends Database {
 	/**
 	 * Find one document by its Id.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function findById
 	 * @param {String} model - Name of the database model.
@@ -81,6 +86,8 @@ export default class extends Database {
 
 	/**
 	 * Find one or more documents.
+	 *
+	 * @memberof MongoDatabase
 	 * @function find
 	 * @param {String} model - Name of the database model.
 	 * @param {Object} where - An object that specifies filter parameters.
@@ -93,6 +100,7 @@ export default class extends Database {
 	/**
 	 * Insert a document.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function insert
 	 * @param {String} model - Name of the database model.
@@ -106,6 +114,7 @@ export default class extends Database {
 	/**
 	 * Update one document.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function updateOne
 	 * @param {String} model - Name of the database model.
@@ -121,6 +130,7 @@ export default class extends Database {
 	/**
 	 * Update one or more documents.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function update
 	 * @param {String} model - Name of the database model.
@@ -136,6 +146,7 @@ export default class extends Database {
 	/**
 	 * Update or Insert a document.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function upsert
 	 * @param {String} model - Name of the database model.
@@ -151,6 +162,7 @@ export default class extends Database {
 	/**
 	 * Delete a document.
 	 *
+	 * @memberof MongoDatabase
 	 * @async
 	 * @function delete
 	 * @param {String} model - Name of the database model.

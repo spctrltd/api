@@ -5,6 +5,7 @@ import {koaBody} from 'koa-body'
 import passport from 'koa-passport'
 import session from 'koa-session'
 import https from 'https'
+import morgan from 'koa-morgan'
 import {mkdirSync} from 'fs'
 import {
 	httpsAgent,
@@ -18,7 +19,8 @@ import {
 	middlewareHandler,
 	isSameHashed,
 	constants,
-	setConfig
+	setConfig,
+	httpClient
 } from './helper.js'
 import authentication from './authentication.js'
 import routeBuilder from './route/builder.js'
@@ -32,6 +34,7 @@ export default class {
 	constructor(config) {
 		this.config = setConfig(config)
 		this.isConfigured = false
+		this.server.context.test = {routes: {}, database: {}}
 	}
 
 	configureDatabase = async () => {
@@ -41,7 +44,14 @@ export default class {
 	}
 
 	configureServer = () => {
-		const {httpsConfig, uploadDir, allowCors, proxy, sessionKey} = this.config.server
+		const {
+			httpsConfig,
+			uploadDir,
+			allowCors,
+			proxy,
+			sessionKey,
+			morgan: morganOptions
+		} = this.config.server
 		if (allowCors) {
 			this.server.use(Cors())
 		}
@@ -62,6 +72,9 @@ export default class {
 			urlencoded: true
 		})
 		this.server.use(parser)
+		if (Array.isArray(morganOptions)) {
+			this.server.use(morgan(...morganOptions))
+		}
 	}
 
 	configureHelpers = () => {
@@ -78,7 +91,8 @@ export default class {
 			developerPrinter: this.config.system.developerPrinter,
 			middlewareHandler,
 			...constants,
-			formatedResponse
+			formatedResponse,
+			httpClient
 		}
 		this.server.context.authentication = {
 			isSameHashed,
@@ -92,7 +106,7 @@ export default class {
 
 	configureRouter = async () => {
 		// middleware
-		await routeBuilder(this.router)
+		this.server.context.test.routes = await routeBuilder(this.router)
 		this.server.use(this.router.routes()).use(this.router.allowedMethods())
 	}
 
@@ -105,7 +119,7 @@ export default class {
 		this.configureHelpers()
 		await this.configureDatabase()
 		this.configureServer()
-		this.configureRouter()
+		await this.configureRouter()
 		this.configureAuthentication()
 		this.isConfigured = true
 	}
@@ -124,6 +138,12 @@ export default class {
 		} else {
 			developerPrinter({httpStarted: true})
 			this.server.listen(port)
+		}
+		return {
+			httpClient,
+			DBO: this.server.context.DBO,
+			test: this.server.context.test,
+			port: this.config.server.port
 		}
 	}
 }

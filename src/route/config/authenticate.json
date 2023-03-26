@@ -3,6 +3,91 @@
 		"method": "POST",
 		"path": "/authenticate/login",
 		"public": true,
-		"middleware": "login"
+		"middleware": "login",
+		"test": {
+			"001": {
+				"label": "Log In with just username and password",
+				"success": {
+					"payload": {
+						"body": {
+							"username": "superuser",
+							"password": "superpassword"
+						}
+					},
+					"status": 200,
+					"body": {
+						"tag": true,
+						"data": {
+						  "token": true,
+						  "expiresAfter": true,
+						  "refreshToken": true
+						}
+					}
+				},
+				"failure": {
+					"payload": {
+						"body": {
+							"username": "superuser",
+							"password": "password"
+						}
+					},
+					"status": 403
+				}
+			},
+			"002": {
+				"label": "Log In and Request OTP",
+				"success": {
+					"payload": {
+						"body": {
+							"username": "superuser",
+							"password": "superpassword",
+							"sendOtp": true
+						}
+					},
+					"status": 200
+				},
+				"failure": {
+					"payload": {
+						"body": {
+							"username": "superuser",
+							"password": "password",
+							"sendOtp": true
+						}
+					},
+					"status": 403
+				}
+			},
+			"003": {
+				"label": "Log In with received OTP",
+				"success": {
+					"payload": {
+						"body": {
+							"username": "superuser",
+							"password": "superpassword",
+							"otp": "[$cache$otp]"
+						}
+					},
+					"status": 200,
+					"body": {
+						"tag": true,
+						"data": {
+						  "token": true,
+						  "expiresAfter": true,
+						  "refreshToken": true
+						}
+					}
+				},
+				"failure": {
+					"payload": {
+						"body": {
+							"username": "superuser",
+							"password": "superpassword",
+							"otp": "1234"
+						}
+					},
+					"status": 403
+				}
+			}
+		}
 	}
 ]

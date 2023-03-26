@@ -1,7 +1,7 @@
 /**
  * Database class
  *
- * @class
+ * @class Database
  * @classdesc Parent database class
  */
 export default class {

@@ -62,7 +62,7 @@ const createConfigList = async (routePath, list = {}) => {
 		.reduce((prev, cur) => [...prev, ...cur], [])
 
 	const configList = configDataList.reduce(async (configered, config) => {
-		const {method, path, middleware: middlewareName, handler: handlerName, role} = config
+		const {method, path, middleware: middlewareName, handler: handlerName, test} = config
 		if (method && path) {
 			const middleware = await getMiddleware(middlewarePath, middlewareName, middlewarePathExists)
 			const handler = await getMiddleware(handlerPath, handlerName, handlerPathExists)
@@ -78,7 +78,7 @@ const createConfigList = async (routePath, list = {}) => {
 					[method]: {
 						middleware,
 						handler,
-						role
+						test
 					}
 				}
 			}
@@ -104,12 +104,33 @@ export default async router => {
 		configList = await createConfigList(userRoutePath, configList)
 	}
 
+	let tests = {}
+
 	Object.keys(configList).forEach(path => {
 		const pathConfig = configList[path]
 		Object.keys(pathConfig).forEach(method => {
-			const {middleware, handler} = pathConfig[method]
+			const {middleware, handler, test} = pathConfig[method]
+			const methodName = method.toLowerCase()
+			router[methodName](...[path, middleware, handler].filter(param => param !== null))
 
-			router[method.toLowerCase()](...[path, middleware, handler].filter(param => param !== null))
+			if (test) {
+				const currentTests = Object.keys(test).reduce((accTests, currentTestKey) => {
+					return {
+						...accTests,
+						[currentTestKey]: {
+							...test[currentTestKey],
+							method: methodName,
+							endpoint: path
+						}
+					}
+				}, {})
+				tests = {
+					...tests,
+					...currentTests
+				}
+			}
 		})
 	})
+
+	return tests
 }

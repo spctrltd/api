@@ -3,7 +3,34 @@
 		"method": "GET",
 		"path": "/session/user",
 		"middleware": "session",
-		"handler": "session"
+		"handler": "session",
+		"test": {
+			"004": {
+				"label": "Logged In Get User",
+				"success": {
+					"payload": {
+						"headers": {
+							"Authorization": "Bearer [$cache$003$body$data$token]"
+						}
+					},
+					"status": 200,
+					"body": {
+						"tag": true,
+						"data": {
+							"session": true
+						}
+					}
+				},
+				"failure": {
+					"payload": {
+						"headers": {
+							"Authorization": "Bearer 12345"
+						}
+					},
+					"status": 401
+				}
+			}
+		}
 	},
 	{
 		"method": "GET",

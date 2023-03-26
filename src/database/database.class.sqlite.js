@@ -9,7 +9,7 @@ const {IS_SQL, REQUIRES_CONDITION, DATABASE_TYPE_SQLITE} = constants
 /**
  * Database class
  *
- * @class
+ * @class SQLiteDatabase
  * @classdesc SQLite class
  */
 export default class extends Database {

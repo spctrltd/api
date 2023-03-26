@@ -4,11 +4,11 @@ import {readJsonFile, hash} from '../helper.js'
 /**
  * Evaluates string to determine Database data type.
  *
- * @function arrayType
+ * @function getType
  * @param {String} name - A data type name.
  * @returns {Object|null}
  */
-const type = name => {
+const getType = name => {
 	switch (name) {
 		case 'String':
 			return String
@@ -38,7 +38,7 @@ const arrayType = data => {
 	if (Array.isArray(data)) {
 		let dataType = null
 		if (data.length === 1) {
-			dataType = type(data[0])
+			dataType = getType(data[0])
 			if (dataType !== null) {
 				dataType = [dataType]
 			} else if (typeof data[0] === 'string') {
@@ -60,7 +60,7 @@ const arrayType = data => {
 const evalDataType = data => {
 	let dataType = data
 	if (typeof data === 'string') {
-		dataType = type(data)
+		dataType = getType(data)
 	} else if (Array.isArray(data)) {
 		dataType = arrayType(data)
 	} else if (typeof data === 'object') {
