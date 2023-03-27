@@ -31,20 +31,20 @@ const DONT_SHUTDOWN_SERVER = Symbol('DONT_SHUTDOWN_SERVER')
  * @const
  */
 export const constants = {
-	IS_SQL,
-	IS_NOT_SQL,
-	IS_MIDDLEWARE,
-	IS_NOT_MIDDLEWARE,
-	REQUIRES_CONDITION,
-	REQUIRES_NO_CONDITION,
-	DATABASE_TYPE_SQLITE,
-	DATABASE_TYPE_MONGODB,
-	FILE_NAME_AS_KEY,
-	FILE_PATH_AS_KEY,
-	REPLACE_KEY,
-	REPLACE_VALUE,
-	SHUTDOWN_SERVER,
-	DONT_SHUTDOWN_SERVER
+  IS_SQL,
+  IS_NOT_SQL,
+  IS_MIDDLEWARE,
+  IS_NOT_MIDDLEWARE,
+  REQUIRES_CONDITION,
+  REQUIRES_NO_CONDITION,
+  DATABASE_TYPE_SQLITE,
+  DATABASE_TYPE_MONGODB,
+  FILE_NAME_AS_KEY,
+  FILE_PATH_AS_KEY,
+  REPLACE_KEY,
+  REPLACE_VALUE,
+  SHUTDOWN_SERVER,
+  DONT_SHUTDOWN_SERVER
 }
 
 /**
@@ -64,14 +64,14 @@ export const getAbsolutePath = filePath => path.join(__dirname, filePath)
  * @returns {Promise<Object>}
  */
 export const fileStat = filePath => {
-	return new Promise(resolve => {
-		stat(filePath, (error, stats) => {
-			if (error) {
-				resolve({})
-			}
-			resolve(stats)
-		})
-	})
+  return new Promise(resolve => {
+    stat(filePath, (error, stats) => {
+      if (error) {
+        resolve({})
+      }
+      resolve(stats)
+    })
+  })
 }
 
 /**
@@ -83,8 +83,8 @@ export const fileStat = filePath => {
  * @returns {Promise<Boolean>}
  */
 export const fileExists = async filePath => {
-	const stats = await fileStat(filePath)
-	return stats.size && stats.size > 0
+  const stats = await fileStat(filePath)
+  return stats.size && stats.size > 0
 }
 
 /**
@@ -96,8 +96,8 @@ export const fileExists = async filePath => {
  * @returns {Promise<Boolean>}
  */
 export const directoryExists = async directoryPath => {
-	const stats = await fileStat(directoryPath)
-	return stats.isDirectory && stats.isDirectory()
+  const stats = await fileStat(directoryPath)
+  return stats.isDirectory && stats.isDirectory()
 }
 
 /**
@@ -108,15 +108,15 @@ export const directoryExists = async directoryPath => {
  * @returns {Object}
  */
 export const httpsAgent = certificatePath => {
-	if (certificatePath) {
-		return new https.Agent({
-			requestCert: true,
-			rejectUnauthorized: false,
-			cert: certificatePath
-		})
-	}
+  if (certificatePath) {
+    return new https.Agent({
+      requestCert: true,
+      rejectUnauthorized: false,
+      cert: certificatePath
+    })
+  }
 
-	return null
+  return null
 }
 
 /**
@@ -144,23 +144,23 @@ const defaultExpireRefresh = 5
  * @returns {Object}
  */
 export const generateToken = (
-	user,
-	secret,
-	expireToken = defaultExpireToken,
-	expireRefresh = defaultExpireRefresh
+  user,
+  secret,
+  expireToken = defaultExpireToken,
+  expireRefresh = defaultExpireRefresh
 ) => {
-	const payload = {user}
-	const expiresAfter = moment().add(expireToken, 'minutes')
-	const expiresIn = parseInt((expiresAfter - moment()) / 1000)
-	const token = jsonwebtoken.sign(payload, secret, {expiresIn})
+  const payload = {user}
+  const expiresAfter = moment().add(expireToken, 'minutes')
+  const expiresIn = parseInt((expiresAfter - moment()) / 1000)
+  const token = jsonwebtoken.sign(payload, secret, {expiresIn})
 
-	const refreshTokenExpiresAfter = moment().add(expireRefresh, 'minutes')
-	const refreshTokenExpiresIn = parseInt((refreshTokenExpiresAfter - moment()) / 1000)
-	const refreshToken = jsonwebtoken.sign(payload, secret, {
-		expiresIn: refreshTokenExpiresIn
-	})
+  const refreshTokenExpiresAfter = moment().add(expireRefresh, 'minutes')
+  const refreshTokenExpiresIn = parseInt((refreshTokenExpiresAfter - moment()) / 1000)
+  const refreshToken = jsonwebtoken.sign(payload, secret, {
+    expiresIn: refreshTokenExpiresIn
+  })
 
-	return {token, expiresAfter, refreshToken, refreshTokenExpiresAfter}
+  return {token, expiresAfter, refreshToken, refreshTokenExpiresAfter}
 }
 
 /**
@@ -171,11 +171,11 @@ export const generateToken = (
  * @param {Srting} path - absolute path to directory.
  */
 export const mkdir = path => {
-	try {
-		mkdirSync(path, {recursive: true})
-	} catch (error) {
-		console.error(`mkdir: ${error}`)
-	}
+  try {
+    mkdirSync(path, {recursive: true})
+  } catch (error) {
+    console.error(`mkdir: ${error}`)
+  }
 }
 
 /**
@@ -186,13 +186,13 @@ export const mkdir = path => {
  * @returns {Object|Array}
  */
 export const readJsonFile = path => {
-	try {
-		const json = readFileSync(path, 'utf8')
-		return JSON.parse(json)
-	} catch (err) {
-		console.log('[readJsonFile]', err)
-		return {}
-	}
+  try {
+    const json = readFileSync(path, 'utf8')
+    return JSON.parse(json)
+  } catch (err) {
+    console.log('[readJsonFile]', err)
+    return {}
+  }
 }
 
 /**
@@ -204,11 +204,11 @@ export const readJsonFile = path => {
  * @returns {String}
  */
 const peekIntoFile = (path, readNumberOfBytes = 1) => {
-	const fd = openSync(path, 'r')
-	const buffer = Buffer.alloc(readNumberOfBytes)
-	readSync(fd, buffer, 0, readNumberOfBytes, null)
-	closeSync(fd)
-	return buffer.toString('utf8', 0, readNumberOfBytes)
+  const fd = openSync(path, 'r')
+  const buffer = Buffer.alloc(readNumberOfBytes)
+  readSync(fd, buffer, 0, readNumberOfBytes, null)
+  closeSync(fd)
+  return buffer.toString('utf8', 0, readNumberOfBytes)
 }
 
 /**
@@ -220,8 +220,8 @@ const peekIntoFile = (path, readNumberOfBytes = 1) => {
  * @returns {Boolean}
  */
 export const isJsonArrayFile = path => {
-	const data = peekIntoFile(path)
-	return data.trim().substring(0, 1) === '['
+  const data = peekIntoFile(path)
+  return data.trim().substring(0, 1) === '['
 }
 
 /**
@@ -240,10 +240,10 @@ const randomSingleDigit = () => Math.floor(Math.random() * Math.floor(10))
  * @returns {String}
  */
 export const generateOTP = (length = 5) => {
-	const randomArray = Buffer.allocUnsafe(length)
-		.toString('utf8', 0, length + 1)
-		.split('')
-	return randomArray.map(() => randomSingleDigit()).join('')
+  const randomArray = Buffer.allocUnsafe(length)
+    .toString('utf8', 0, length + 1)
+    .split('')
+  return randomArray.map(() => randomSingleDigit()).join('')
 }
 
 /**
@@ -253,12 +253,12 @@ export const generateOTP = (length = 5) => {
  * @param {Any} data - warning message.
  */
 export const developerPrinter = data => {
-	const {NODE_ENV = 'development'} = process.env
-	if (NODE_ENV === 'development') {
-		console.info('\x1b[46m%s\x1b[0m', ' - INFO START ')
-		console.info('\x1b[32m%s\x1b[0m', data)
-		console.info('\x1b[46m%s\x1b[0m', ' - INFO END ')
-	}
+  const {NODE_ENV = 'development'} = process.env
+  if (NODE_ENV === 'development') {
+    console.info('\x1b[46m%s\x1b[0m', ' - INFO START ')
+    console.info('\x1b[32m%s\x1b[0m', data)
+    console.info('\x1b[46m%s\x1b[0m', ' - INFO END ')
+  }
 }
 
 /**
@@ -268,7 +268,7 @@ export const developerPrinter = data => {
  * @param {String} data - warning message.
  */
 export const warningPrinter = data => {
-	console.info('\x1b[43m%s\x1b[0m', 'WARNING', data)
+  console.info('\x1b[43m%s\x1b[0m', 'WARNING', data)
 }
 
 /**
@@ -298,80 +298,80 @@ export const isSameHashed = (plainText, hashedValue) => hash(`${plainText}`) ===
  * @returns {Symbol}
  */
 const sequelizeOpKeys = key => {
-	const keys = {
-		// Comparison
-		$eq: Op.eq,
-		$ne: Op.ne,
-		$gt: Op.gt,
-		$gte: Op.gte,
-		$in: Op.in,
-		$nin: Op.notIn,
-		$lt: Op.lt,
-		$lte: Op.lte,
-		// Logical
-		$and: Op.and,
-		$not: Op.not,
-		$or: Op.or,
-		// Evaluation
-		$regex: Op.regexp
-	}
-	const incompatibleKeys = [
-		'$nor',
-		'$exists',
-		'$type',
-		'$expr',
-		'$jsonSchema',
-		'$mod',
-		'$text',
-		'$where',
-		'$geoIntersects',
-		'$geoWithin',
-		'$near',
-		'$nearSphere',
-		'$box',
-		'$center',
-		'$centerSphere',
-		'$geometry',
-		'$maxDistance',
-		'$minDistance',
-		'$polygon',
-		'$elemMatch',
-		'$size',
-		'$bitsAllClear',
-		'$bitsAllSet',
-		'$bitsAnyClear',
-		'$bitsAnySet',
-		'$slice',
-		'$comment',
-		'$rand',
-		'$natural',
-		'$currentDate',
-		'$inc',
-		'$min',
-		'$max',
-		'$mul',
-		'$rename',
-		'$set',
-		'$setOnInsert',
-		'$unset',
-		'$addToSet',
-		'$pop',
-		'$pull',
-		'$push',
-		'$pullAll',
-		'$each',
-		'$position',
-		'$slice',
-		'$sort',
-		'$bit'
-	]
-	if (incompatibleKeys.includes(key) || key.includes('.$')) {
-		throw Error(`This operator is not compatible with SQL: ${key}`)
-	}
-	if (Object.prototype.hasOwnProperty.call(keys, key)) {
-		return keys[key]
-	}
-	return key
+  const keys = {
+    // Comparison
+    $eq: Op.eq,
+    $ne: Op.ne,
+    $gt: Op.gt,
+    $gte: Op.gte,
+    $in: Op.in,
+    $nin: Op.notIn,
+    $lt: Op.lt,
+    $lte: Op.lte,
+    // Logical
+    $and: Op.and,
+    $not: Op.not,
+    $or: Op.or,
+    // Evaluation
+    $regex: Op.regexp
+  }
+  const incompatibleKeys = [
+    '$nor',
+    '$exists',
+    '$type',
+    '$expr',
+    '$jsonSchema',
+    '$mod',
+    '$text',
+    '$where',
+    '$geoIntersects',
+    '$geoWithin',
+    '$near',
+    '$nearSphere',
+    '$box',
+    '$center',
+    '$centerSphere',
+    '$geometry',
+    '$maxDistance',
+    '$minDistance',
+    '$polygon',
+    '$elemMatch',
+    '$size',
+    '$bitsAllClear',
+    '$bitsAllSet',
+    '$bitsAnyClear',
+    '$bitsAnySet',
+    '$slice',
+    '$comment',
+    '$rand',
+    '$natural',
+    '$currentDate',
+    '$inc',
+    '$min',
+    '$max',
+    '$mul',
+    '$rename',
+    '$set',
+    '$setOnInsert',
+    '$unset',
+    '$addToSet',
+    '$pop',
+    '$pull',
+    '$push',
+    '$pullAll',
+    '$each',
+    '$position',
+    '$slice',
+    '$sort',
+    '$bit'
+  ]
+  if (incompatibleKeys.includes(key) || key.includes('.$')) {
+    throw Error(`This operator is not compatible with SQL: ${key}`)
+  }
+  if (Object.prototype.hasOwnProperty.call(keys, key)) {
+    return keys[key]
+  }
+  return key
 }
 
 /**
@@ -384,26 +384,26 @@ const sequelizeOpKeys = key => {
  * @returns {Object}
  */
 export const replaceInObject = (object, replacerFunction, replaceWhat = REPLACE_KEY) => {
-	if (object !== null && object !== undefined) {
-		if (Array.isArray(object)) {
-			return object.map(value => replaceInObject(value, replacerFunction, replaceWhat))
-		}
-		if (typeof object === 'object' && Object.keys(object).length > 0) {
-			return Object.keys(object).reduce((builtObject, key) => {
-				let value = object[key]
-				if (typeof object[key] === 'object') {
-					value = replaceInObject(object[key], replacerFunction, replaceWhat)
-				}
-				const newKey = replaceWhat === REPLACE_KEY ? replacerFunction(key) : key
-				const newValue = replaceWhat === REPLACE_VALUE ? replacerFunction(value) : value
-				return {
-					...builtObject,
-					[newKey]: newValue
-				}
-			}, {})
-		}
-	}
-	return object
+  if (object !== null && object !== undefined) {
+    if (Array.isArray(object)) {
+      return object.map(value => replaceInObject(value, replacerFunction, replaceWhat))
+    }
+    if (typeof object === 'object' && Object.keys(object).length > 0) {
+      return Object.keys(object).reduce((builtObject, key) => {
+        let value = object[key]
+        if (typeof object[key] === 'object') {
+          value = replaceInObject(object[key], replacerFunction, replaceWhat)
+        }
+        const newKey = replaceWhat === REPLACE_KEY ? replacerFunction(key) : key
+        const newValue = replaceWhat === REPLACE_VALUE ? replacerFunction(value) : value
+        return {
+          ...builtObject,
+          [newKey]: newValue
+        }
+      }, {})
+    }
+  }
+  return object
 }
 
 /**
@@ -415,20 +415,20 @@ export const replaceInObject = (object, replacerFunction, replaceWhat = REPLACE_
  * @returns {object}
  */
 export const gaurdedCondition = (
-	data,
-	isSql = IS_NOT_SQL,
-	requiresCondition = REQUIRES_NO_CONDITION
+  data,
+  isSql = IS_NOT_SQL,
+  requiresCondition = REQUIRES_NO_CONDITION
 ) => {
-	const hasNoConditions =
-		!data || (data && typeof data === 'object' && Object.keys(data).length === 0)
-	if (requiresCondition === REQUIRES_CONDITION && hasNoConditions) {
-		return false
-	}
-	let where = isSql === IS_SQL ? {} : data
-	if (data && isSql === IS_SQL) {
-		where = {where: replaceInObject(data, sequelizeOpKeys)}
-	}
-	return where
+  const hasNoConditions =
+    !data || (data && typeof data === 'object' && Object.keys(data).length === 0)
+  if (requiresCondition === REQUIRES_CONDITION && hasNoConditions) {
+    return false
+  }
+  let where = isSql === IS_SQL ? {} : data
+  if (data && isSql === IS_SQL) {
+    where = {where: replaceInObject(data, sequelizeOpKeys)}
+  }
+  return where
 }
 
 /**
@@ -439,10 +439,10 @@ export const gaurdedCondition = (
  * @returns {String}
  */
 export const formatedResponse = data =>
-	JSON.stringify({
-		tag: moment().valueOf(),
-		data
-	})
+  JSON.stringify({
+    tag: moment().valueOf(),
+    data
+  })
 
 /**
  * Sets KoaRouter middleware or controller response
@@ -455,19 +455,19 @@ export const formatedResponse = data =>
  * @param {Symbol} [handlerType] - set whether this function behaves like middleware or a controller.
  */
 export const middlewareHandler = (
-	ctx = {},
-	next,
-	status = 200,
-	body,
-	handlerType = IS_NOT_MIDDLEWARE
+  ctx = {},
+  next,
+  status = 200,
+  body,
+  handlerType = IS_NOT_MIDDLEWARE
 ) => {
-	ctx.status = status
-	if (body) {
-		ctx.body = ctx.helper.formatedResponse(body)
-	}
-	if (handlerType === IS_MIDDLEWARE && typeof next === 'function') {
-		next()
-	}
+  ctx.status = status
+  if (body) {
+    ctx.body = ctx.helper.formatedResponse(body)
+  }
+  if (handlerType === IS_MIDDLEWARE && typeof next === 'function') {
+    next()
+  }
 }
 
 /**
@@ -483,44 +483,44 @@ const defaultKey = 'ba21767ae494afe5a2165dcb3338c5323e9907050e34542c405d575cc31b
  * @const
  */
 const defaultConfig = {
-	database: {
-		type: DATABASE_TYPE_SQLITE,
-		databaseFile: undefined,
-		memoryOnly: false,
-		defaultUser: {
-			username: 'superuser',
-			password: 'superpassword'
-		},
-		connectionString: undefined
-	},
-	server: {
-		sessionKey: defaultKey,
-		formatedResponse,
-		httpsConfig: {
-			key: undefined, // fs.readFileSync('/app/server-private-key.pem'),
-			cert: undefined // fs.readFileSync('/app/server-certificate.pem')
-		},
-		uploadDir: '/tmp/dump',
-		allowCors: false,
-		port: 8000,
-		proxy: undefined,
-		morgan: ['common']
-	},
-	service: {
-		otp: otp => developerPrinter({otp})
-	},
-	account: {
-		secretKey: defaultKey,
-		usernameField: 'username',
-		jwtExpiresInMinutes: defaultExpireToken,
-		jwtRefreshExpiresInMinutes: defaultExpireRefresh
-	},
-	system: {
-		developerPrinter
-	},
-	test: {
-		shutdown: false
-	}
+  database: {
+    type: DATABASE_TYPE_SQLITE,
+    databaseFile: undefined,
+    memoryOnly: false,
+    defaultUser: {
+      username: 'superuser',
+      password: 'superpassword'
+    },
+    connectionString: undefined
+  },
+  server: {
+    sessionKey: defaultKey,
+    formatedResponse,
+    httpsConfig: {
+      key: undefined, // fs.readFileSync('/app/server-private-key.pem'),
+      cert: undefined // fs.readFileSync('/app/server-certificate.pem')
+    },
+    uploadDir: '/tmp/dump',
+    allowCors: false,
+    port: 8000,
+    proxy: undefined,
+    morgan: ['common']
+  },
+  service: {
+    otp: otp => developerPrinter({otp})
+  },
+  account: {
+    secretKey: defaultKey,
+    usernameField: 'username',
+    jwtExpiresInMinutes: defaultExpireToken,
+    jwtRefreshExpiresInMinutes: defaultExpireRefresh
+  },
+  system: {
+    developerPrinter
+  },
+  test: {
+    shutdown: false
+  }
 }
 
 /**
@@ -529,20 +529,20 @@ const defaultConfig = {
  * @const
  */
 const configWarnings = {
-	account: {
-		secretKey: {
-			message:
-				'"account.secretKey" is set to the default value that is known all. Please change when deploying to production.',
-			response: value => value === defaultKey
-		}
-	},
-	server: {
-		sessionKey: {
-			message:
-				'"server.sessionKey" is set to the default value that is known all. Please change when deploying to production.',
-			response: value => value === defaultKey
-		}
-	}
+  account: {
+    secretKey: {
+      message:
+        '"account.secretKey" is set to the default value that is known all. Please change when deploying to production.',
+      response: value => value === defaultKey
+    }
+  },
+  server: {
+    sessionKey: {
+      message:
+        '"server.sessionKey" is set to the default value that is known all. Please change when deploying to production.',
+      response: value => value === defaultKey
+    }
+  }
 }
 
 /**
@@ -555,22 +555,22 @@ const configWarnings = {
  * @returns {Object}
  */
 const generateConfig = (key, config) => {
-	const configured = Object.keys(config).reduce(
-		(cfg, currentKey) => ({...cfg, [currentKey]: config[currentKey]}),
-		defaultConfig[key]
-	)
+  const configured = Object.keys(config).reduce(
+    (cfg, currentKey) => ({...cfg, [currentKey]: config[currentKey]}),
+    defaultConfig[key]
+  )
 
-	if (Object.prototype.hasOwnProperty.call(configWarnings, key)) {
-		const configMessages = configWarnings[key]
-		Object.keys(configMessages).forEach(configKey => {
-			const {message, response} = configMessages[configKey]
-			if (response(configured[configKey])) {
-				warningPrinter(message)
-			}
-		})
-	}
+  if (Object.prototype.hasOwnProperty.call(configWarnings, key)) {
+    const configMessages = configWarnings[key]
+    Object.keys(configMessages).forEach(configKey => {
+      const {message, response} = configMessages[configKey]
+      if (response(configured[configKey])) {
+        warningPrinter(message)
+      }
+    })
+  }
 
-	return configured
+  return configured
 }
 
 /**
@@ -581,15 +581,15 @@ const generateConfig = (key, config) => {
  * @returns {Object}
  */
 export const setConfig = (config = {}) => {
-	const {database = {}, server = {}, service = {}, account = {}, system = {}, test = {}} = config
-	return {
-		database: generateConfig('database', database),
-		server: generateConfig('server', server),
-		service: generateConfig('service', service),
-		account: generateConfig('account', account),
-		system: generateConfig('system', system),
-		test: generateConfig('test', test)
-	}
+  const {database = {}, server = {}, service = {}, account = {}, system = {}, test = {}} = config
+  return {
+    database: generateConfig('database', database),
+    server: generateConfig('server', server),
+    service: generateConfig('service', service),
+    account: generateConfig('account', account),
+    system: generateConfig('system', system),
+    test: generateConfig('test', test)
+  }
 }
 
 /**
@@ -602,25 +602,25 @@ export const setConfig = (config = {}) => {
  * @returns {Object}
  */
 export const createFileList = (
-	directoryPath,
-	extensions = [],
-	keyValue = FILE_NAME_AS_KEY,
-	list = {}
+  directoryPath,
+  extensions = [],
+  keyValue = FILE_NAME_AS_KEY,
+  list = {}
 ) => {
-	const fileList = {...list}
-	readdirSync(directoryPath).forEach(file => {
-		const includeAll = extensions.length === 0
-		const extensionName = path.extname(file).toLowerCase()
-		if (includeAll || extensions.includes(extensionName)) {
-			const name = path.basename(file, extensionName)
-			const filePath = `${directoryPath}/${file}`
-			const key = keyValue === FILE_NAME_AS_KEY ? name : filePath
-			if (!Object.prototype.hasOwnProperty.call(fileList, name)) {
-				fileList[key] = filePath
-			}
-		}
-	})
-	return fileList
+  const fileList = {...list}
+  readdirSync(directoryPath).forEach(file => {
+    const includeAll = extensions.length === 0
+    const extensionName = path.extname(file).toLowerCase()
+    if (includeAll || extensions.includes(extensionName)) {
+      const name = path.basename(file, extensionName)
+      const filePath = `${directoryPath}/${file}`
+      const key = keyValue === FILE_NAME_AS_KEY ? name : filePath
+      if (!Object.prototype.hasOwnProperty.call(fileList, name)) {
+        fileList[key] = filePath
+      }
+    }
+  })
+  return fileList
 }
 
 /**
@@ -629,80 +629,80 @@ export const createFileList = (
  * @const
  */
 export const httpClient = {
-	/**
-	 * POST method http client.
-	 *
-	 * @async
-	 * @function post
-	 * @param {String} url - An absolute url.
-	 * @param {Object} options - An Axios options object.
-	 * @param {Object} inputData - The POST payload.
-	 * @returns {Promise<Object>}
-	 */
-	post: (url, options, inputData) => {
-		return new Promise(resolve => {
-			axios
-				.post(url, inputData, options)
-				.then(({data}) => {
-					resolve(data)
-				})
-				.catch(err => {
-					console.error(err)
-					resolve(null)
-				})
-		})
-	},
+  /**
+   * POST method http client.
+   *
+   * @async
+   * @function post
+   * @param {String} url - An absolute url.
+   * @param {Object} options - An Axios options object.
+   * @param {Object} inputData - The POST payload.
+   * @returns {Promise<Object>}
+   */
+  post: (url, options, inputData) => {
+    return new Promise(resolve => {
+      axios
+        .post(url, inputData, options)
+        .then(({data}) => {
+          resolve(data)
+        })
+        .catch(err => {
+          console.error(err)
+          resolve(null)
+        })
+    })
+  },
 
-	/**
-	 * GET method http client.
-	 *
-	 * @async
-	 * @function post
-	 * @param {String} url - An absolute url.
-	 * @param {Object} options - An Axios options object.
-	 * @returns {Promise<Object>}
-	 */
-	get: (url, options) => {
-		return new Promise(resolve => {
-			axios
-				.get(url, options)
-				.then(({data}) => {
-					resolve(data)
-				})
-				.catch(err => {
-					console.error(err)
-					resolve(null)
-				})
-		})
-	},
+  /**
+   * GET method http client.
+   *
+   * @async
+   * @function post
+   * @param {String} url - An absolute url.
+   * @param {Object} options - An Axios options object.
+   * @returns {Promise<Object>}
+   */
+  get: (url, options) => {
+    return new Promise(resolve => {
+      axios
+        .get(url, options)
+        .then(({data}) => {
+          resolve(data)
+        })
+        .catch(err => {
+          console.error(err)
+          resolve(null)
+        })
+    })
+  },
 
-	/**
-	 * ANY method http client.
-	 *
-	 * @async
-	 * @function any
-	 * @param {String} method - The request method eg. POST, GET, etc.
-	 * @param {String} url - An absolute url.
-	 * @param {Object} [options] - An Axios options object.
-	 * @returns {Promise<Object>}
-	 */
-	any: (method, url, options) => {
-		return new Promise(resolve => {
-			axios({
-				method,
-				url,
-				...options
-			})
-				.then(({status, data}) => {
-					resolve({status, data})
-				})
-				.catch((error = {}) => {
-					const {response = {}} = error
-					const {status, data} = response
-					resolve({status, data})
-				})
-		})
-	}
+  /**
+   * ANY method http client.
+   *
+   * @async
+   * @function any
+   * @param {String} method - The request method eg. POST, GET, etc.
+   * @param {String} url - An absolute url.
+   * @param {Object} [options] - An Axios options object.
+   * @returns {Promise<Object>}
+   */
+  any: (method, url, options) => {
+    return new Promise(resolve => {
+      axios({
+        method,
+        url,
+        ...options
+      })
+        .then(({status, data}) => {
+          resolve({status, data})
+        })
+        .catch((error = {}) => {
+          const {response = {}} = error
+          const {status, data} = response
+          resolve({status, data})
+        })
+    })
+  }
 }
 
 /**
@@ -715,15 +715,15 @@ export const httpClient = {
  * @returns {Boolean}
  */
 const hasAllKeys = (a, b, recursively = false) => {
-	return Object.keys(a).every(key => {
-		if (!Object.keys(b).includes(key)) {
-			return false
-		}
-		if (!recursively || a[key] === null || typeof a[key] !== 'object') {
-			return true
-		}
-		return hasAllKeys(a[key], b[key], true)
-	})
+  return Object.keys(a).every(key => {
+    if (!Object.keys(b).includes(key)) {
+      return false
+    }
+    if (!recursively || a[key] === null || typeof a[key] !== 'object') {
+      return true
+    }
+    return hasAllKeys(a[key], b[key], true)
+  })
 }
 
 /**
@@ -739,16 +739,16 @@ const hasAllKeys = (a, b, recursively = false) => {
  * @returns {Promise<Object>}
  */
 export const testRoute = async (method, url, payload, expectedStatus, expectedBody) => {
-	const response = await httpClient.any(method, url, {
-		data: payload.body,
-		headers: payload.headers
-	})
-	const statusPassed = expectedStatus === response.status
-	let bodyPassed = !expectedBody
-	if (expectedBody) {
-		bodyPassed = hasAllKeys(expectedBody, response.data)
-	}
-	return {passed: statusPassed && bodyPassed, response}
+  const response = await httpClient.any(method, url, {
+    data: payload.body,
+    headers: payload.headers
+  })
+  const statusPassed = expectedStatus === response.status
+  let bodyPassed = !expectedBody
+  if (expectedBody) {
+    bodyPassed = hasAllKeys(expectedBody, response.data)
+  }
+  return {passed: statusPassed && bodyPassed, response}
 }
 
 /**
@@ -762,12 +762,12 @@ export const testRoute = async (method, url, payload, expectedStatus, expectedBo
  * @returns {Object}
  */
 export const flattenObject = (object, flattenedObject = {}, prepend = '', delimeter = '') => {
-	for (const key in object) {
-		if (typeof object[key] !== 'object') {
-			flattenedObject[`${prepend}${key}`] = object[key]
-		} else {
-			flattenObject(object[key], flattenedObject, `${prepend}${key}${delimeter}`, delimeter)
-		}
-	}
-	return flattenedObject
+  for (const key in object) {
+    if (typeof object[key] !== 'object') {
+      flattenedObject[`${prepend}${key}`] = object[key]
+    } else {
+      flattenObject(object[key], flattenedObject, `${prepend}${key}${delimeter}`, delimeter)
+    }
+  }
+  return flattenedObject
 }

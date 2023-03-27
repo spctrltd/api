@@ -1,12 +1,12 @@
 import {resolve} from 'path'
 import {
-	directoryExists,
-	getAbsolutePath,
-	readJsonFile,
-	fileExists,
-	createFileList,
-	isJsonArrayFile,
-	constants
+  directoryExists,
+  getAbsolutePath,
+  readJsonFile,
+  fileExists,
+  createFileList,
+  isJsonArrayFile,
+  constants
 } from '../helper.js'
 
 const AsyncFunction = async function () {}.constructor
@@ -22,21 +22,21 @@ const AsyncFunction = async function () {}.constructor
  * @returns {Promise<Function|null>}
  */
 const getMiddleware = async (middlewarePath, middlewareName, middlewarePathExists) => {
-	if (middlewareName && middlewarePathExists) {
-		const middlewareFilePath = `${middlewarePath}/${middlewareName}.js`
-		const middlewareExists = await fileExists(middlewareFilePath)
-		if (middlewareExists) {
-			const middlewareFunction = await import(middlewareFilePath)
-			return async (ctx, next) => {
-				if (middlewareFunction.default instanceof AsyncFunction) {
-					return await middlewareFunction.default(ctx, next)
-				} else {
-					return middlewareFunction.default(ctx, next)
-				}
-			}
-		}
-	}
-	return null
+  if (middlewareName && middlewarePathExists) {
+    const middlewareFilePath = `${middlewarePath}/${middlewareName}.js`
+    const middlewareExists = await fileExists(middlewareFilePath)
+    if (middlewareExists) {
+      const middlewareFunction = await import(middlewareFilePath)
+      return async (ctx, next) => {
+        if (middlewareFunction.default instanceof AsyncFunction) {
+          return await middlewareFunction.default(ctx, next)
+        } else {
+          return middlewareFunction.default(ctx, next)
+        }
+      }
+    }
+  }
+  return null
 }
 
 /**
@@ -49,44 +49,44 @@ const getMiddleware = async (middlewarePath, middlewareName, middlewarePathExist
  * @returns {Promise<Object>}
  */
 const createConfigList = async (routePath, list = {}) => {
-	const configPath = `${routePath}/config`
-	const handlerPath = `${routePath}/handler`
-	const middlewarePath = `${routePath}/middleware`
-	const handlerPathExists = await directoryExists(handlerPath)
-	const middlewarePathExists = await directoryExists(middlewarePath)
-	const fileList = createFileList(configPath, ['.json'], constants.FILE_NAME_AS_KEY)
+  const configPath = `${routePath}/config`
+  const handlerPath = `${routePath}/handler`
+  const middlewarePath = `${routePath}/middleware`
+  const handlerPathExists = await directoryExists(handlerPath)
+  const middlewarePathExists = await directoryExists(middlewarePath)
+  const fileList = createFileList(configPath, ['.json'], constants.FILE_NAME_AS_KEY)
 
-	const configDataList = Object.values(fileList)
-		.filter(file => isJsonArrayFile(file))
-		.map(file => readJsonFile(file))
-		.reduce((prev, cur) => [...prev, ...cur], [])
+  const configDataList = Object.values(fileList)
+    .filter(file => isJsonArrayFile(file))
+    .map(file => readJsonFile(file))
+    .reduce((prev, cur) => [...prev, ...cur], [])
 
-	const configList = configDataList.reduce(async (configered, config) => {
-		const {method, path, middleware: middlewareName, handler: handlerName, test} = config
-		if (method && path) {
-			const middleware = await getMiddleware(middlewarePath, middlewareName, middlewarePathExists)
-			const handler = await getMiddleware(handlerPath, handlerName, handlerPathExists)
+  const configList = configDataList.reduce(async (configered, config) => {
+    const {method, path, middleware: middlewareName, handler: handlerName, test} = config
+    if (method && path) {
+      const middleware = await getMiddleware(middlewarePath, middlewareName, middlewarePathExists)
+      const handler = await getMiddleware(handlerPath, handlerName, handlerPathExists)
 
-			const configeredResolved = await configered
+      const configeredResolved = await configered
 
-			return {
-				...configeredResolved,
-				[path]: {
-					...(Object.prototype.hasOwnProperty.call(configeredResolved, path)
-						? configeredResolved[path]
-						: {}),
-					[method]: {
-						middleware,
-						handler,
-						test
-					}
-				}
-			}
-		}
-		return configered
-	}, list)
+      return {
+        ...configeredResolved,
+        [path]: {
+          ...(Object.prototype.hasOwnProperty.call(configeredResolved, path)
+            ? configeredResolved[path]
+            : {}),
+          [method]: {
+            middleware,
+            handler,
+            test
+          }
+        }
+      }
+    }
+    return configered
+  }, list)
 
-	return configList
+  return configList
 }
 
 /**
@@ -96,41 +96,41 @@ const createConfigList = async (routePath, list = {}) => {
  * @param {KoaRouter} router - KoaRouter instance.
  */
 export default async router => {
-	const routePath = getAbsolutePath('./route')
-	let configList = await createConfigList(routePath)
-	const userRoutePath = `${resolve('.')}/route`
-	const doesExist = await directoryExists(`${userRoutePath}/config`)
-	if (doesExist) {
-		configList = await createConfigList(userRoutePath, configList)
-	}
+  const routePath = getAbsolutePath('./route')
+  let configList = await createConfigList(routePath)
+  const userRoutePath = `${resolve('.')}/route`
+  const doesExist = await directoryExists(`${userRoutePath}/config`)
+  if (doesExist) {
+    configList = await createConfigList(userRoutePath, configList)
+  }
 
-	let tests = {}
+  let tests = {}
 
-	Object.keys(configList).forEach(path => {
-		const pathConfig = configList[path]
-		Object.keys(pathConfig).forEach(method => {
-			const {middleware, handler, test} = pathConfig[method]
-			const methodName = method.toLowerCase()
-			router[methodName](...[path, middleware, handler].filter(param => param !== null))
+  Object.keys(configList).forEach(path => {
+    const pathConfig = configList[path]
+    Object.keys(pathConfig).forEach(method => {
+      const {middleware, handler, test} = pathConfig[method]
+      const methodName = method.toLowerCase()
+      router[methodName](...[path, middleware, handler].filter(param => param !== null))
 
-			if (test) {
-				const currentTests = Object.keys(test).reduce((accTests, currentTestKey) => {
-					return {
-						...accTests,
-						[currentTestKey]: {
-							...test[currentTestKey],
-							method: methodName,
-							endpoint: path
-						}
-					}
-				}, {})
-				tests = {
-					...tests,
-					...currentTests
-				}
-			}
-		})
-	})
+      if (test) {
+        const currentTests = Object.keys(test).reduce((accTests, currentTestKey) => {
+          return {
+            ...accTests,
+            [currentTestKey]: {
+              ...test[currentTestKey],
+              method: methodName,
+              endpoint: path
+            }
+          }
+        }, {})
+        tests = {
+          ...tests,
+          ...currentTests
+        }
+      }
+    })
+  })
 
-	return tests
+  return tests
 }
