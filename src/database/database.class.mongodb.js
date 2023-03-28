@@ -20,9 +20,10 @@ export default class extends Database {
    * @function init
    */
   init = async () => {
-    const {models, fields} = await schemaLoader(DATABASE_TYPE_MONGODB)
+    const {models, fields, tests} = await schemaLoader(DATABASE_TYPE_MONGODB)
     this.models = models
     this.fields = fields
+    this.tests = tests
     await mongoose.connect(this.connectionString)
     await this.initAccount()
     this.defineModels()

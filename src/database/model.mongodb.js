@@ -147,7 +147,11 @@ export default (name, modelPath) => {
       })
     }
 
-    return {model: mongoose.model(name, schema), fields: Object.keys(config.model)}
+    return {
+      model: mongoose.model(name, schema),
+      fields: Object.keys(config.model),
+      test: config.test
+    }
   }
 
   return null

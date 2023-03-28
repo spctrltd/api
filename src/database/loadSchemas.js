@@ -16,6 +16,7 @@ const {DATABASE_TYPE_SQLITE, DATABASE_TYPE_MONGODB, FILE_NAME_AS_KEY} = constant
 export default async (databaseType, sequelize) => {
   const dataModels = {}
   const modelFields = {}
+  const modelTests = {}
   const dataModelsPath = getAbsolutePath('./database/account')
   let fileList = createFileList(dataModelsPath, ['.json'], FILE_NAME_AS_KEY)
   const userDataModelsPath = `${path.resolve('.')}/data-models`
@@ -30,9 +31,14 @@ export default async (databaseType, sequelize) => {
   }
 
   Object.keys(fileList).forEach(async name => {
-    const {model, fields} = await modelGenerator[databaseType](name, fileList[name], sequelize)
+    const {model, fields, test} = await modelGenerator[databaseType](
+      name,
+      fileList[name],
+      sequelize
+    )
     dataModels[name] = model
     modelFields[name] = fields
+    modelTests[name] = test
   })
-  return {models: dataModels, fields: modelFields}
+  return {models: dataModels, fields: modelFields, tests: modelTests}
 }

@@ -715,6 +715,12 @@ export const httpClient = {
  * @returns {Boolean}
  */
 const hasAllKeys = (a, b, recursively = false) => {
+  if (Array.isArray(a)) {
+    const hasAllKeysFiltered = a.filter((currentA, index) =>
+      hasAllKeys(currentA, b[index], recursively)
+    )
+    return hasAllKeysFiltered.length === a.length
+  }
   return Object.keys(a).every(key => {
     if (!Object.keys(b).includes(key)) {
       return false
@@ -727,7 +733,7 @@ const hasAllKeys = (a, b, recursively = false) => {
 }
 
 /**
- * Compare two objects to determine if both have the same keys.
+ * Test an http method with a certain payload to match a predetermined output.
  *
  * @async
  * @function testRoute
@@ -770,4 +776,52 @@ export const flattenObject = (object, flattenedObject = {}, prepend = '', delime
     }
   }
   return flattenedObject
+}
+
+/**
+ * Replace templated keywords in config
+ *
+ * @function testConfigReplacer
+ * @param {String|Any} value - The value to replace.
+ * @param {Object} store - The object to get the replacement value from.
+ * @returns {String|Any}
+ */
+export const testConfigReplacer = (value, store) => {
+  if (typeof value === 'string') {
+    const regexCache = /\[\$cache\$(.*?)\]/
+    const cacheMatch = value.match(regexCache)
+    if (cacheMatch) {
+      const eventKey = cacheMatch[1]
+      return value.replace(regexCache, store[eventKey])
+    }
+    const regexFunction = /\[\$function\$(.*?)\]/
+    const functionMatch = value.match(regexFunction)
+    if (functionMatch) {
+      const functionName = functionMatch[1]
+      const functionParam = functionMatch[2].split('$')
+      return functionName(...functionParam)
+    }
+  }
+  return value
+}
+
+/**
+ * Test a certain database operation with a certain payload to match a predetermined output.
+ *
+ * @async
+ * @function testDatabase
+ * @param {Function} operation - The database operation.
+ * @param {Array} parameters - The parameters passed to the operation.
+ * @param {Any} expectedOutput - The expected response from the operation.
+ * @returns {Promise<Object>}
+ */
+export const testDatabase = async (operation, parameters, expectedOutput) => {
+  const response = await operation(...parameters)
+  const typeOfPassed = typeof response === typeof expectedOutput
+  let passed = typeOfPassed && response === expectedOutput
+
+  if (typeof response === 'object') {
+    passed = hasAllKeys(expectedOutput, response)
+  }
+  return {passed, response}
 }

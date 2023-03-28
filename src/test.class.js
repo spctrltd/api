@@ -1,6 +1,14 @@
 import {EventEmitter} from 'node:events'
 import Api from './api.class.js'
-import {testRoute, replaceInObject, constants, flattenObject, setConfig} from './helper.js'
+import {
+  testRoute,
+  replaceInObject,
+  constants,
+  flattenObject,
+  setConfig,
+  testConfigReplacer,
+  testDatabase
+} from './helper.js'
 
 /**
  * Test class
@@ -10,7 +18,8 @@ import {testRoute, replaceInObject, constants, flattenObject, setConfig} from '.
  */
 export default class {
   emitter = new EventEmitter()
-  store = {}
+  routeStore = {}
+  databaseStore = {}
   count = 0
   passed = 0
   constructor(config) {
@@ -22,11 +31,14 @@ export default class {
       },
       service: {
         ...(config.service || {}),
-        otp: otp => this.emitter.emit('cache', 'otp', otp)
+        otp: otp => this.emitter.emit('routes', 'otp', otp)
       }
     })
-    this.emitter.on('cache', (key, value) => {
-      this.store[key] = value
+    this.emitter.on('routes', (key, value) => {
+      this.routeStore[key] = value
+    })
+    this.emitter.on('database', (key, value) => {
+      this.databaseStore[key] = value
     })
     this.emitter.on('count', passed => {
       this.count++
@@ -37,17 +49,7 @@ export default class {
   }
 
   unitTestRoute = async (id, method, url, payload, expectedStatus, expectedBody) => {
-    const replacer = value => {
-      if (typeof value === 'string') {
-        const regex = /\[\$cache\$(.*?)\]/
-        const cacheMatch = value.match(regex)
-        if (cacheMatch) {
-          const eventKey = cacheMatch[1]
-          return value.replace(regex, this.store[eventKey])
-        }
-      }
-      return value
-    }
+    const replacer = value => testConfigReplacer(value, this.routeStore)
     const newPayload = replaceInObject(payload, replacer, constants.REPLACE_VALUE)
     const {passed, response} = await testRoute(
       method,
@@ -59,8 +61,25 @@ export default class {
     if (response && response.data && typeof response.data === 'object') {
       const flattenedResponse = flattenObject(response.data, {}, `${id}$body$`, '$')
       Object.keys(flattenedResponse).forEach(key => {
-        this.emitter.emit('cache', key, flattenedResponse[key])
+        this.emitter.emit('routes', key, flattenedResponse[key])
       })
+    }
+    return passed
+  }
+
+  unitTestDatabase = async (id, operation, payload) => {
+    const replacer = value => testConfigReplacer(value, this.databaseStore)
+    const newParameters = replaceInObject(payload.parameters, replacer, constants.REPLACE_VALUE)
+    const newExpectedOutput = replaceInObject(payload.response, replacer, constants.REPLACE_VALUE)
+    const {passed, response} = await testDatabase(operation, newParameters, newExpectedOutput)
+    console.info({passed, response})
+    if (response && typeof response === 'object') {
+      const flattenedResponse = flattenObject(response, {}, `${id}$`, '$')
+      Object.keys(flattenedResponse).forEach(key => {
+        this.emitter.emit('database', key, flattenedResponse[key])
+      })
+    } else {
+      this.emitter.emit('database', id, response)
     }
     return passed
   }
@@ -76,7 +95,26 @@ export default class {
     const api = new Api(this.config)
     api
       .start()
-      .then(async ({test: {routes, database}, port}) => {
+      .then(async ({test: {routes, database}, port, DBO}) => {
+        console.info(database)
+        if (Object.keys(database).length > 0) {
+          for (let x = 0; x < Object.keys(database).length; x++) {
+            const modelName = Object.keys(database)[x]
+            const modelTests = database[modelName]
+            if (modelTests && typeof modelTests === 'object') {
+              for (let y = 0; y < Object.keys(modelTests).length; y++) {
+                const testId = Object.keys(modelTests)[y]
+                const {success, failure, label, operation} = modelTests[testId]
+                const modelOperation = DBO[modelName][operation]
+                const successResult = await this.unitTestDatabase(testId, modelOperation, success)
+                this.outputResult(successResult, `"${label}" to Pass`, `${operation.toUpperCase()}`)
+                const failureResult = await this.unitTestDatabase(testId, modelOperation, failure)
+                this.outputResult(failureResult, `"${label}" to Fail`, `${operation.toUpperCase()}`)
+              }
+            }
+          }
+        }
+
         const baseUrl = `http://localhost:${port}`
         if (Object.keys(routes).length > 0) {
           for (let x = 0; x < Object.keys(routes).length; x++) {
@@ -104,8 +142,6 @@ export default class {
             this.outputResult(failureResult, `"${label}" to Fail`, `${method} ${endpoint}`)
           }
         }
-
-        // test database:
 
         console.info(`\x1b[47m%s\x1b[0m`, ` TOTAL: ${this.count} `)
         console.info(`\x1b[47m%s\x1b[0m`, ` FAILED: ${this.count - this.passed} `)

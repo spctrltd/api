@@ -18,6 +18,7 @@ export default class {
     this.models = null
     this.DBO = {}
     this.fields = {}
+    this.tests = {}
   }
 
   /**

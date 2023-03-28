@@ -47,6 +47,7 @@ export default class {
     const database = new DatabaseBuilder(this.config.database)
     this.server.context.database = await database.init()
     this.server.context.DBO = this.server.context.database.DBO
+    this.server.context.test.database = this.server.context.database.tests
   }
 
   configureServer = () => {
@@ -146,7 +147,6 @@ export default class {
       this.server.listen(port)
     }
     return {
-      httpClient,
       DBO: this.server.context.DBO,
       test: this.server.context.test,
       port: this.config.server.port

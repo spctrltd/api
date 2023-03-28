@@ -17,34 +17,63 @@
   },
   "test": {
     "001": {
-      "label": "Log In with just username and password",
+      "label": "Insert a user",
+      "operation": "insert",
       "success": {
-        "insert": {
-          "payload": {
-            "username": "superuser",
-            "password": "superpassword",
-            "email": "user@test.com"
-          },
-          "response": {
-            "username": "superuser",
-            "password": "superpassword",
+        "parameters": [
+          {
+            "username": "testuser",
+            "password": "testpassword",
             "email": "user@test.com"
           }
+        ],
+        "response": {
+          "username": "testuser",
+          "password": "[$function$hash$testpassword]",
+          "email": "user@test.com"
         }
       },
       "failure": {
-        "insert": {
-          "payload": {
-            "user_name": "superuser",
-            "password": "superpassword",
+        "parameters": {
+          "user_name": "testuser",
+          "passWord": "testpassword",
+          "email": "user@test.com"
+        },
+        "response": {
+          "username": "testuser",
+          "password": "testpassword",
+          "email": "user@test.com"
+        }
+      }
+    },
+    "002": {
+      "label": "update user",
+      "operation": "update",
+      "success": {
+        "parameters": {
+          "data": {
+            "username": "testuser",
+            "password": "testpassword123",
             "email": "user@test.com"
           },
-          "response": {
-            "username": "superuser",
-            "password": "superpassword",
-            "email": "user@test.com"
+          "where": {
+            "id": "$cache$001$id"
           }
-        }
+        },
+        "response": 1
+      },
+      "failure": {
+        "parameters": {
+          "data": {
+            "username": "testuser",
+            "password": "testpassword123",
+            "email": "user@test.com"
+          },
+          "where": {
+            "id": "1"
+          }
+        },
+        "response": 0
       }
     }
   }

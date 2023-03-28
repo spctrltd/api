@@ -40,12 +40,13 @@ export default class extends Database {
       storage
     })
 
-    const {fields} = await schemaLoader(DATABASE_TYPE_SQLITE, this.sequelize)
+    const {fields, tests} = await schemaLoader(DATABASE_TYPE_SQLITE, this.sequelize)
     await this.sequelize.sync()
     // TODO: migrations
     await this.initAccount()
     this.models = this.sequelize.models
     this.fields = fields
+    this.tests = tests
     this.defineModels()
   }
 
