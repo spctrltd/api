@@ -3,13 +3,17 @@
     "id": "ObjectId",
     "username": {
       "type": "String",
-      "unique": true
+      "unique": true,
+      "required": true
     },
     "email": {
       "type": "String",
       "unique": true
     },
-    "password": "String"
+    "password": {
+      "type": "String",
+      "required": true
+    }
   },
   "schema": {
     "encryptPassword": true,
@@ -34,46 +38,41 @@
         }
       },
       "failure": {
-        "parameters": {
+        "parameters": [{
           "user_name": "testuser",
           "passWord": "testpassword",
           "email": "user@test.com"
-        },
-        "response": {
-          "username": "testuser",
-          "password": "testpassword",
-          "email": "user@test.com"
-        }
+        }]
       }
     },
     "002": {
       "label": "update user",
-      "operation": "update",
+      "operation": "updateOne",
       "success": {
-        "parameters": {
-          "data": {
+        "parameters": [
+          {
+            "id": "[$cache$001$id]"
+          },
+          {
             "username": "testuser",
             "password": "testpassword123",
             "email": "user@test.com"
-          },
-          "where": {
-            "id": "$cache$001$id"
           }
-        },
+        ],
         "response": 1
       },
       "failure": {
-        "parameters": {
-          "data": {
+        "parameters": [
+          {
+            "id": "1"
+          },
+          {
             "username": "testuser",
             "password": "testpassword123",
             "email": "user@test.com"
-          },
-          "where": {
-            "id": "1"
           }
-        },
-        "response": 0
+        ],
+        "response": -1
       }
     }
   }

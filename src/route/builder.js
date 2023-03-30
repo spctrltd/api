@@ -1,13 +1,5 @@
 import {resolve} from 'path'
-import {
-  directoryExists,
-  getAbsolutePath,
-  readJsonFile,
-  fileExists,
-  createFileList,
-  isJsonArrayFile,
-  constants
-} from '../helper.js'
+import Helper from '../helper.class.js'
 
 const AsyncFunction = async function () {}.constructor
 
@@ -24,7 +16,7 @@ const AsyncFunction = async function () {}.constructor
 const getMiddleware = async (middlewarePath, middlewareName, middlewarePathExists) => {
   if (middlewareName && middlewarePathExists) {
     const middlewareFilePath = `${middlewarePath}/${middlewareName}.js`
-    const middlewareExists = await fileExists(middlewareFilePath)
+    const middlewareExists = await Helper.fileExists(middlewareFilePath)
     if (middlewareExists) {
       const middlewareFunction = await import(middlewareFilePath)
       return async (ctx, next) => {
@@ -52,13 +44,13 @@ const createConfigList = async (routePath, list = {}) => {
   const configPath = `${routePath}/config`
   const handlerPath = `${routePath}/handler`
   const middlewarePath = `${routePath}/middleware`
-  const handlerPathExists = await directoryExists(handlerPath)
-  const middlewarePathExists = await directoryExists(middlewarePath)
-  const fileList = createFileList(configPath, ['.json'], constants.FILE_NAME_AS_KEY)
+  const handlerPathExists = await Helper.directoryExists(handlerPath)
+  const middlewarePathExists = await Helper.directoryExists(middlewarePath)
+  const fileList = Helper.createFileList(configPath, ['.json'], Helper.FILE_NAME_AS_KEY)
 
   const configDataList = Object.values(fileList)
-    .filter(file => isJsonArrayFile(file))
-    .map(file => readJsonFile(file))
+    .filter(file => Helper.isJsonArrayFile(file))
+    .map(file => Helper.readJsonFile(file))
     .reduce((prev, cur) => [...prev, ...cur], [])
 
   const configList = configDataList.reduce(async (configered, config) => {
@@ -96,10 +88,10 @@ const createConfigList = async (routePath, list = {}) => {
  * @param {KoaRouter} router - KoaRouter instance.
  */
 export default async router => {
-  const routePath = getAbsolutePath('./route')
+  const routePath = Helper.getAbsolutePath('./route')
   let configList = await createConfigList(routePath)
   const userRoutePath = `${resolve('.')}/route`
-  const doesExist = await directoryExists(`${userRoutePath}/config`)
+  const doesExist = await Helper.directoryExists(`${userRoutePath}/config`)
   if (doesExist) {
     configList = await createConfigList(userRoutePath, configList)
   }

@@ -6,12 +6,13 @@
  */
 export default class {
   constructor(options) {
-    const {databaseFile, memoryOnly, defaultUser, connectionString} = options
+    const {databaseFile, memoryOnly, defaultUser, connectionString, connectionOptions} = options
 
     this.defaultUser = defaultUser
     this.databaseFile = databaseFile
     this.memoryOnly = memoryOnly
     this.connectionString = connectionString
+    this.connectionOptions = connectionOptions
 
     this.connection = null
     this.sequelize = null
@@ -35,7 +36,7 @@ export default class {
     } = this.defaultUser
 
     const result = await this.findOne('accountuser', {username: defaultUserUsername})
-    if (!result) {
+    if (result === null) {
       await this.insert('accountuser', {
         username: defaultUserUsername,
         password: defaultUserPassword
@@ -55,9 +56,9 @@ export default class {
     Object.keys(this.models).forEach(model => {
       this.DBO[model] = {
         count: data => this.count(model, data),
-        findOne: data => this.findOne(model, data),
-        findById: id => this.findById(model, id),
-        find: data => this.find(model, data),
+        findOne: (where, options) => this.findOne(model, where, options),
+        findById: (id, options) => this.findById(model, id, options),
+        find: (where, options) => this.find(model, where, options),
         insert: data => this.insert(model, data),
         delete: data => this.delete(model, data),
         updateOne: (where, data) => this.updateOne(model, where, data),

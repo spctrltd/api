@@ -1,20 +1,86 @@
 {
   "model": {
     "id": "ObjectId",
-    "userId": "ObjectId",
-    "otp": "String",
-    "expires": "Date"
+    "userId": {"type": "ObjectId", "required": true},
+    "otp": {"type": "String", "required": true},
+    "expires": {"type": "Date", "required": true}
   },
   "schema": {
     "encryptPassword": true,
     "idField": "id",
     "passwordField": "otp",
     "virtuals": {
-      "userId": {
+      "user": {
+        "localField": "userId",
         "ref": "accountuser",
-        "localField": "accountUserId",
         "foreignField": "id",
-        "options": { "sort": { "expires": -1 } }
+        "justOne": true
+      }
+    }
+  },
+  "test": {
+    "003": {
+      "label": "Insert an otp",
+      "operation": "insert",
+      "success": {
+        "parameters": [
+          {
+            "userId": "[$cache$001$id]",
+            "otp": "12345",
+            "expires": "2023-03-29T21:14:40.845Z"
+          }
+        ],
+        "response": {
+          "userId": "[$cache$001$id]",
+          "otp": "[$function$hash$12345]",
+          "expires": "2023-03-29T21:14:40.845Z"
+        }
+      }
+    },
+    "004": {
+      "label": "Select from otp",
+      "operation": "findOne",
+      "success": {
+        "parameters": [
+          {
+            "id": "[$cache$003$id]"
+          },
+          {
+            "populate": ["user"]
+          }
+        ],
+        "response": {
+          "userId": "[$cache$001$id]",
+          "otp": "[$cache$003$otp]",
+          "expires": "2023-03-29T21:14:40.845Z",
+          "user": {
+            "username": "testuser",
+            "password": "[$function$hash$testpassword123]",
+            "email": "user@test.com"
+          }
+        }
+      }
+    },
+    "005": {
+      "label": "Select all from otp",
+      "operation": "find",
+      "success": {
+        "parameters": [
+          {},
+          {
+            "populate": ["user"]
+          }
+        ],
+        "response": [{
+          "userId": "[$cache$003$userId]",
+          "otp": "[$cache$003$otp]",
+          "expires": "2023-03-29T21:14:40.845Z",
+          "user": {
+            "username": "testuser",
+            "password": "[$function$hash$testpassword123]",
+            "email": "user@test.com"
+          }
+        }]
       }
     }
   }

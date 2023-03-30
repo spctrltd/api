@@ -1,8 +1,6 @@
 import Sqlite from './database.class.sqlite.js'
 import Mongodb from './database.class.mongodb.js'
-import {constants} from '../helper.js'
-
-const {DATABASE_TYPE_SQLITE, DATABASE_TYPE_MONGODB} = constants
+import Helper from '../helper.class.js'
 
 /**
  * Database Builder class
@@ -12,8 +10,8 @@ const {DATABASE_TYPE_SQLITE, DATABASE_TYPE_MONGODB} = constants
  */
 export default class {
   drivers = {
-    [DATABASE_TYPE_SQLITE]: Sqlite,
-    [DATABASE_TYPE_MONGODB]: Mongodb
+    [Helper.DATABASE_TYPE_SQLITE]: Sqlite,
+    [Helper.DATABASE_TYPE_MONGODB]: Mongodb
   }
 
   constructor({type, ...options}) {

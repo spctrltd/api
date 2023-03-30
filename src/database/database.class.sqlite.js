@@ -1,10 +1,8 @@
 import path from 'path'
 import {Sequelize} from 'sequelize'
-import {fileExists, mkdir, gaurdedCondition, constants} from '../helper.js'
+import Helper from '../helper.class.js'
 import schemaLoader from './loadSchemas.js'
 import Database from './database.class.js'
-
-const {IS_SQL, REQUIRES_CONDITION, DATABASE_TYPE_SQLITE} = constants
 
 /**
  * Database class
@@ -26,12 +24,12 @@ export default class extends Database {
       let databaseFilePath = this.databaseFile
       if (!databaseFilePath) {
         const databaseDir = `${path.resolve('.')}/datastore`
-        mkdir(databaseDir)
+        Helper.mkdir(databaseDir)
         databaseFilePath = `${databaseDir}/database.db`
       }
-      const doesFileExist = await fileExists(databaseFilePath)
+      const doesFileExist = await Helper.fileExists(databaseFilePath)
       if (!doesFileExist) {
-        mkdir(path.dirname(databaseFilePath))
+        Helper.mkdir(path.dirname(databaseFilePath))
       }
       storage = databaseFilePath
     }
@@ -40,7 +38,7 @@ export default class extends Database {
       storage
     })
 
-    const {fields, tests} = await schemaLoader(DATABASE_TYPE_SQLITE, this.sequelize)
+    const {fields, tests} = await schemaLoader(Helper.DATABASE_TYPE_SQLITE, this.sequelize)
     await this.sequelize.sync()
     // TODO: migrations
     await this.initAccount()
@@ -85,8 +83,15 @@ export default class extends Database {
    * @returns {Promise<Number>}
    */
   count = async (model, data) => {
-    const number = await this.sequelize.models[model].count(gaurdedCondition(data, IS_SQL))
-    return parseInt(number)
+    try {
+      const number = await this.sequelize.models[model].count(
+        Helper.gaurdedCondition(data, Helper.IS_SQL)
+      )
+      return parseInt(number)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return -1
+    }
   }
 
   /**
@@ -97,10 +102,18 @@ export default class extends Database {
    * @function findOne
    * @param {String} model - Name of the database model.
    * @param {Object} where - An object that specifies filter parameters.
+   * @param {Object} options - An object that specifies options.
    * @returns {Promise<Object>}
    */
-  findOne = async (model, data) => {
-    return await this.sequelize.models[model].findOne(gaurdedCondition(data, IS_SQL))
+  findOne = async (model, data, options = {}) => {
+    try {
+      return await this.sequelize.models[model].findOne(
+        Helper.gaurdedCondition(data, Helper.IS_SQL)
+      )
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return {}
+    }
   }
 
   /**
@@ -111,10 +124,16 @@ export default class extends Database {
    * @function findById
    * @param {String} model - Name of the database model.
    * @param {String|Number} id - An integer or string that specifies the row Id.
+   * @param {Object} options - An object that specifies options.
    * @returns {Promise<Object>}
    */
-  findById = async (model, id) => {
-    return await this.sequelize.models[model].findByPk(id)
+  findById = async (model, id, options = {}) => {
+    try {
+      return await this.sequelize.models[model].findByPk(id)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return {}
+    }
   }
 
   /**
@@ -124,10 +143,18 @@ export default class extends Database {
    * @function find
    * @param {String} model - Name of the database model.
    * @param {Object} where - An object that specifies filter parameters.
+   * @param {Object} options - An object that specifies options.
    * @returns {Promise<Array>}
    */
-  find = async (model, data) => {
-    return await this.sequelize.models[model].findAll(gaurdedCondition(data, IS_SQL))
+  find = async (model, data, options = {}) => {
+    try {
+      return await this.sequelize.models[model].findAll(
+        Helper.gaurdedCondition(data, Helper.IS_SQL)
+      )
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return []
+    }
   }
 
   /**
@@ -141,7 +168,12 @@ export default class extends Database {
    * @returns {Promise<Object>}
    */
   insert = async (model, data) => {
-    return await this.sequelize.models[model].create(data)
+    try {
+      return await this.sequelize.models[model].create(data)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return {}
+    }
   }
 
   /**
@@ -156,11 +188,16 @@ export default class extends Database {
    * @returns {Promise<Number>}
    */
   updateOne = async (model, where, data) => {
-    const {affectedCount} = await this.sequelize.models[model].update(data, {
-      ...gaurdedCondition(where, IS_SQL),
-      limit: 1
-    })
-    return parseInt(affectedCount)
+    try {
+      const {affectedCount} = await this.sequelize.models[model].update(data, {
+        ...Helper.gaurdedCondition(where, Helper.IS_SQL),
+        limit: 1
+      })
+      return parseInt(affectedCount)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return -1
+    }
   }
 
   /**
@@ -175,11 +212,16 @@ export default class extends Database {
    * @returns {Promise<Number>}
    */
   update = async (model, where, data) => {
-    const {affectedCount} = await this.sequelize.models[model].update(
-      data,
-      gaurdedCondition(where, IS_SQL)
-    )
-    return parseInt(affectedCount)
+    try {
+      const {affectedCount} = await this.sequelize.models[model].update(
+        data,
+        Helper.gaurdedCondition(where, Helper.IS_SQL)
+      )
+      return parseInt(affectedCount)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return -1
+    }
   }
 
   /**
@@ -194,8 +236,13 @@ export default class extends Database {
    * @returns {Promise<Object>}
    */
   upsert = async (model, where, data) => {
-    await this.sequelize.models[model].upsert(data, gaurdedCondition(where, IS_SQL))
-    return await this.findOne(model, where)
+    try {
+      await this.sequelize.models[model].upsert(data, Helper.gaurdedCondition(where, Helper.IS_SQL))
+      return await this.findOne(model, where)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return {}
+    }
   }
 
   /**
@@ -209,9 +256,14 @@ export default class extends Database {
    * @returns {Promise<Number>}
    */
   delete = async (model, where) => {
-    const number = await this.sequelize.models[model].destroy(
-      gaurdedCondition(where, IS_SQL, REQUIRES_CONDITION)
-    )
-    return parseInt(number)
+    try {
+      const number = await this.sequelize.models[model].destroy(
+        Helper.gaurdedCondition(where, Helper.IS_SQL, Helper.REQUIRES_CONDITION)
+      )
+      return parseInt(number)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return -1
+    }
   }
 }

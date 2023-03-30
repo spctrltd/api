@@ -1,9 +1,7 @@
 import mongoose from 'mongoose'
 import schemaLoader from './loadSchemas.js'
 import Database from './database.class.js'
-import {gaurdedCondition, constants} from '../helper.js'
-
-const {REQUIRES_CONDITION, DATABASE_TYPE_MONGODB, IS_NOT_SQL} = constants
+import Helper from '../helper.class.js'
 
 /**
  * Database class
@@ -20,11 +18,11 @@ export default class extends Database {
    * @function init
    */
   init = async () => {
-    const {models, fields, tests} = await schemaLoader(DATABASE_TYPE_MONGODB)
+    const {models, fields, tests} = await schemaLoader(Helper.DATABASE_TYPE_MONGODB)
     this.models = models
     this.fields = fields
     this.tests = tests
-    await mongoose.connect(this.connectionString)
+    await mongoose.connect(this.connectionString, this.connectionOptions)
     await this.initAccount()
     this.defineModels()
   }
@@ -64,8 +62,13 @@ export default class extends Database {
    * @returns {Promise<Number>}
    */
   count = async (model, where) => {
-    const number = await this.models[model].estimatedDocumentCount(where)
-    return parseInt(number)
+    try {
+      const number = await this.models[model].estimatedDocumentCount(where)
+      return parseInt(number)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return -1
+    }
   }
 
   /**
@@ -76,10 +79,25 @@ export default class extends Database {
    * @function findOne
    * @param {String} model - Name of the database model.
    * @param {Object} where - An object that specifies filter parameters.
+   * @param {Object} options - An object that specifies options.
    * @returns {Promise<Object>}
    */
-  findOne = async (model, where) => {
-    return await this.models[model].findOne(where)
+  findOne = async (model, where, options = {}) => {
+    const {populate} = options
+    try {
+      let response
+      if (this.hasOptions(options)) {
+        response = this.models[model].findOne(where)
+        response = this.populate(response, populate)
+        response = await response.exec()
+      } else {
+        response = await this.models[model].findOne(where)
+      }
+      return response !== null ? response.toObject() : null
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return undefined
+    }
   }
 
   /**
@@ -90,10 +108,25 @@ export default class extends Database {
    * @function findById
    * @param {String} model - Name of the database model.
    * @param {String|ObjectId} id - An object or string that specifies the document Id.
+   * @param {Object} options - An object that specifies options.
    * @returns {Promise<Object>}
    */
-  findById = async (model, id) => {
-    return await this.models[model].findById(id)
+  findById = async (model, id, options = {}) => {
+    const {populate} = options
+    try {
+      let response
+      if (this.hasOptions(options)) {
+        response = this.models[model].findById(id)
+        response = this.populate(response, populate)
+        response = await response.exec()
+      } else {
+        response = await this.models[model].findById(id)
+      }
+      return response !== null ? response.toObject() : null
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return undefined
+    }
   }
 
   /**
@@ -103,10 +136,25 @@ export default class extends Database {
    * @function find
    * @param {String} model - Name of the database model.
    * @param {Object} where - An object that specifies filter parameters.
+   * @param {Object} options - An object that specifies options.
    * @returns {Promise<Array>}
    */
-  find = async (model, where) => {
-    return await this.models[model].find(where)
+  find = async (model, where, options = {}) => {
+    const {populate} = options
+    try {
+      let response
+      if (this.hasOptions(options)) {
+        response = this.models[model].find(where)
+        response = this.populate(response, populate)
+        response = await response.exec()
+      } else {
+        response = await this.models[model].find(where)
+      }
+      return response.map(doc => doc.toObject())
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return undefined
+    }
   }
 
   /**
@@ -120,7 +168,13 @@ export default class extends Database {
    * @returns {Promise<Object>}
    */
   insert = async (model, data) => {
-    return await new this.models[model](data).save()
+    try {
+      const response = await new this.models[model](data).save()
+      return response !== null ? response.toObject() : null
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return undefined
+    }
   }
 
   /**
@@ -135,8 +189,13 @@ export default class extends Database {
    * @returns {Promise<Number>}
    */
   updateOne = async (model, where, data) => {
-    const {matchedCount} = await this.models[model].updateOne(where, data)
-    return parseInt(matchedCount)
+    try {
+      const {matchedCount} = await this.models[model].updateOne(where, data)
+      return parseInt(matchedCount)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return -1
+    }
   }
 
   /**
@@ -151,8 +210,13 @@ export default class extends Database {
    * @returns {Promise<Number>}
    */
   update = async (model, where, data) => {
-    const {matchedCount} = await this.models[model].updateMany(where, data)
-    return parseInt(matchedCount)
+    try {
+      const {matchedCount} = await this.models[model].updateMany(where, data)
+      return parseInt(matchedCount)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return -1
+    }
   }
 
   /**
@@ -167,8 +231,15 @@ export default class extends Database {
    * @returns {Promise<Object>}
    */
   upsert = async (model, where, data) => {
-    await this.models[model].updateOne(where, data, {upsert: true})
-    return await this.findOne(model, where)
+    try {
+      await this.models[model].updateOne(where, data, {upsert: true})
+      const response = await this.findOne(model, where)
+      const {_doc = null} = response || {}
+      return _doc
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return undefined
+    }
   }
 
   /**
@@ -182,9 +253,49 @@ export default class extends Database {
    * @returns {Promise<Number>}
    */
   delete = async (model, where) => {
-    const {deletedCount} = await this.models[model].deleteMany(
-      gaurdedCondition(where, IS_NOT_SQL, REQUIRES_CONDITION)
-    )
-    return parseInt(deletedCount)
+    try {
+      const {deletedCount} = await this.models[model].deleteMany(
+        Helper.gaurdedCondition(where, Helper.IS_NOT_SQL, Helper.REQUIRES_CONDITION)
+      )
+      return parseInt(deletedCount)
+    } catch (error) {
+      Helper.developerPrinter(error)
+      return -1
+    }
+  }
+
+  /**
+   * Populate a virtual or ref field.
+   *
+   * @memberof MongoDatabase
+   * @function populate
+   * @param {Query} query - The query to run the operation on.
+   * @param {Array|undefined} populate - An array of fields to populate.
+   * @returns {Query}
+   */
+  populate = (query, populate) => {
+    if (Array.isArray(populate) && populate.length > 0) {
+      let populateQuery = query
+      for (let x = 0; x < populate.length; x++) {
+        populateQuery = populateQuery.populate(populate[x])
+      }
+    }
+    return query
+  }
+
+  /**
+   * Check if options is valid.
+   *
+   * @memberof MongoDatabase
+   * @function hasOptions
+   * @param {Object} options - An object.
+   * @returns {Boolean}
+   */
+  hasOptions = options => {
+    if (Object.keys(options).length === 0) {
+      return false
+    }
+    // TODO: complete all conditions
+    return true
   }
 }

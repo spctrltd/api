@@ -1,5 +1,5 @@
 import {DataTypes, Model} from 'sequelize'
-import {readJsonFile, hash} from '../helper.js'
+import Helper from '../helper.class.js'
 
 /**
  * Evaluates string to determine Database data type.
@@ -89,7 +89,7 @@ const setDataType = (structure, options = {}) => {
         dataType = {
           ...dataType,
           set(value) {
-            this.setDataValue(passwordField, hash(value))
+            this.setDataValue(passwordField, Helper.hash(value))
           }
         }
       }
@@ -130,7 +130,7 @@ const setDataType = (structure, options = {}) => {
  * @returns {Promise<Object>}
  */
 export default async (name, modelPath, sequelize) => {
-  const config = readJsonFile(modelPath)
+  const config = Helper.readJsonFile(modelPath)
 
   if (config.model) {
     const models = Object.keys(sequelize.models)

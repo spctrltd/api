@@ -1,14 +1,6 @@
 import {EventEmitter} from 'node:events'
 import Api from './api.class.js'
-import {
-  testRoute,
-  replaceInObject,
-  constants,
-  flattenObject,
-  setConfig,
-  testConfigReplacer,
-  testDatabase
-} from './helper.js'
+import Helper from './helper.class.js'
 
 /**
  * Test class
@@ -23,7 +15,7 @@ export default class {
   count = 0
   passed = 0
   constructor(config) {
-    this.config = setConfig({
+    this.config = Helper.setConfig({
       ...config,
       server: {
         ...(config.server || {}),
@@ -48,18 +40,36 @@ export default class {
     })
   }
 
-  unitTestRoute = async (id, method, url, payload, expectedStatus, expectedBody) => {
-    const replacer = value => testConfigReplacer(value, this.routeStore)
-    const newPayload = replaceInObject(payload, replacer, constants.REPLACE_VALUE)
-    const {passed, response} = await testRoute(
+  unitTestRoute = async (
+    id,
+    method,
+    url,
+    payload,
+    expectedStatus,
+    expectedBody,
+    isSuccessTest = Helper.IS_SUCCESS_TEST
+  ) => {
+    const replacer = value => Helper.testConfigReplacer(value, this.routeStore)
+    const newPayload = Helper.replaceInObject(payload, replacer, Helper.REPLACE_VALUE)
+    const {passed, response} = await Helper.testRoute(
       method,
       url,
       newPayload,
       expectedStatus,
       expectedBody
     )
-    if (response && response.data && typeof response.data === 'object') {
-      const flattenedResponse = flattenObject(response.data, {}, `${id}$body$`, '$')
+    if (
+      response &&
+      response.data &&
+      typeof response.data === 'object' &&
+      isSuccessTest === Helper.IS_SUCCESS_TEST
+    ) {
+      const flattenedResponse = Helper.flattenObject(
+        JSON.parse(JSON.stringify(response.data)),
+        {},
+        `${id}$body$`,
+        '$'
+      )
       Object.keys(flattenedResponse).forEach(key => {
         this.emitter.emit('routes', key, flattenedResponse[key])
       })
@@ -67,19 +77,33 @@ export default class {
     return passed
   }
 
-  unitTestDatabase = async (id, operation, payload) => {
-    const replacer = value => testConfigReplacer(value, this.databaseStore)
-    const newParameters = replaceInObject(payload.parameters, replacer, constants.REPLACE_VALUE)
-    const newExpectedOutput = replaceInObject(payload.response, replacer, constants.REPLACE_VALUE)
-    const {passed, response} = await testDatabase(operation, newParameters, newExpectedOutput)
-    console.info({passed, response})
-    if (response && typeof response === 'object') {
-      const flattenedResponse = flattenObject(response, {}, `${id}$`, '$')
-      Object.keys(flattenedResponse).forEach(key => {
-        this.emitter.emit('database', key, flattenedResponse[key])
-      })
-    } else {
-      this.emitter.emit('database', id, response)
+  unitTestDatabase = async (id, operation, payload, isSuccessTest = Helper.IS_SUCCESS_TEST) => {
+    const replacer = value => Helper.testConfigReplacer(value, this.databaseStore)
+    const newParameters = Helper.replaceInObject(payload.parameters, replacer, Helper.REPLACE_VALUE)
+    const newExpectedOutput = Helper.replaceInObject(
+      payload.response,
+      replacer,
+      Helper.REPLACE_VALUE
+    )
+    const {passed, response} = await Helper.testDatabase(
+      operation,
+      newParameters,
+      newExpectedOutput
+    )
+    if (isSuccessTest === Helper.IS_SUCCESS_TEST) {
+      if (response && typeof response === 'object') {
+        const flattenedResponse = Helper.flattenObject(
+          JSON.parse(JSON.stringify(response)),
+          {},
+          `${id}$`,
+          '$'
+        )
+        Object.keys(flattenedResponse).forEach(key => {
+          this.emitter.emit('database', key, flattenedResponse[key])
+        })
+      } else {
+        this.emitter.emit('database', id, response)
+      }
     }
     return passed
   }
@@ -96,21 +120,26 @@ export default class {
     api
       .start()
       .then(async ({test: {routes, database}, port, DBO}) => {
-        console.info(database)
+        const modelList = []
         if (Object.keys(database).length > 0) {
-          for (let x = 0; x < Object.keys(database).length; x++) {
-            const modelName = Object.keys(database)[x]
-            const modelTests = database[modelName]
-            if (modelTests && typeof modelTests === 'object') {
-              for (let y = 0; y < Object.keys(modelTests).length; y++) {
-                const testId = Object.keys(modelTests)[y]
-                const {success, failure, label, operation} = modelTests[testId]
-                const modelOperation = DBO[modelName][operation]
-                const successResult = await this.unitTestDatabase(testId, modelOperation, success)
-                this.outputResult(successResult, `"${label}" to Pass`, `${operation.toUpperCase()}`)
-                const failureResult = await this.unitTestDatabase(testId, modelOperation, failure)
-                this.outputResult(failureResult, `"${label}" to Fail`, `${operation.toUpperCase()}`)
-              }
+          for (let a = 0; a < Object.keys(database).length; a++) {
+            const {success, failure, label, operation, id: testId, model: modelName} = database[a]
+            const modelOperation = DBO[modelName][operation]
+            if (success) {
+              const successResult = await this.unitTestDatabase(testId, modelOperation, success)
+              this.outputResult(successResult, `"${label}" to Pass`, `${operation.toUpperCase()}`)
+            }
+            if (failure) {
+              const failureResult = await this.unitTestDatabase(
+                testId,
+                modelOperation,
+                failure,
+                Helper.IS_FAILURE_TEST
+              )
+              this.outputResult(failureResult, `"${label}" to Fail`, `${operation.toUpperCase()}`)
+            }
+            if (success || failure) {
+              modelList.push(modelName)
             }
           }
         }
@@ -121,25 +150,36 @@ export default class {
             const testId = Object.keys(routes)[x]
             const {method, endpoint, success, failure, label} = routes[testId]
             const url = `${baseUrl}${endpoint}`
-            const successResult = await this.unitTestRoute(
-              testId,
-              method,
-              url,
-              success.payload,
-              success.status,
-              success.body
-            )
+            if (success) {
+              const successResult = await this.unitTestRoute(
+                testId,
+                method,
+                url,
+                success.payload,
+                success.status,
+                success.body
+              )
 
-            this.outputResult(successResult, `"${label}" to Pass`, `${method} ${endpoint}`)
-            const failureResult = await this.unitTestRoute(
-              testId,
-              method,
-              url,
-              failure.payload,
-              failure.status,
-              failure.body
-            )
-            this.outputResult(failureResult, `"${label}" to Fail`, `${method} ${endpoint}`)
+              this.outputResult(successResult, `"${label}" to Pass`, `${method} ${endpoint}`)
+            }
+            if (failure) {
+              const failureResult = await this.unitTestRoute(
+                testId,
+                method,
+                url,
+                failure.payload,
+                failure.status,
+                failure.body,
+                Helper.IS_FAILURE_TEST
+              )
+              this.outputResult(failureResult, `"${label}" to Fail`, `${method} ${endpoint}`)
+            }
+          }
+        }
+
+        if (modelList.length > 0) {
+          for (let z = 0; z < modelList.length; z++) {
+            await DBO[modelList[z]].delete({id: {$ne: null}})
           }
         }
 
@@ -148,8 +188,8 @@ export default class {
         console.info(`\x1b[47m%s\x1b[0m`, ` PASSED: ${this.passed} `)
 
         const shutdown = this.config.test.shutdown
-          ? constants.SHUTDOWN_SERVER
-          : constants.DONT_SHUTDOWN_SERVER
+          ? Helper.SHUTDOWN_SERVER
+          : Helper.DONT_SHUTDOWN_SERVER
         api.stop(shutdown)
       })
       .catch(error => {

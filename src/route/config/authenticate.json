@@ -35,35 +35,6 @@
 				}
 			},
 			"002": {
-				"label": "Log In with just email and password",
-				"success": {
-					"payload": {
-						"body": {
-							"username": "user@test.com",
-							"password": "superpassword"
-						}
-					},
-					"status": 200,
-					"body": {
-						"tag": true,
-						"data": {
-						  "token": true,
-						  "expiresAfter": true,
-						  "refreshToken": true
-						}
-					}
-				},
-				"failure": {
-					"payload": {
-						"body": {
-							"username": "user1@test.com",
-							"password": "password"
-						}
-					},
-					"status": 403
-				}
-			},
-			"003": {
 				"label": "Log In and Request OTP",
 				"success": {
 					"payload": {
@@ -86,7 +57,7 @@
 					"status": 403
 				}
 			},
-			"004": {
+			"003": {
 				"label": "Log In with received OTP",
 				"success": {
 					"payload": {

@@ -7,21 +7,7 @@ import session from 'koa-session'
 import https from 'https'
 import morgan from 'koa-morgan'
 import {mkdirSync} from 'fs'
-import {
-  httpsAgent,
-  getAbsolutePath,
-  fileExists,
-  directoryExists,
-  readJsonFile,
-  mkdir,
-  generateToken,
-  generateOTP,
-  middlewareHandler,
-  isSameHashed,
-  constants,
-  setConfig,
-  httpClient
-} from './helper.js'
+import Helper from './helper.class.js'
 import authentication from './authentication.js'
 import routeBuilder from './route/builder.js'
 import DatabaseBuilder from './database/database.builder.class.js'
@@ -33,12 +19,12 @@ import DatabaseBuilder from './database/database.builder.class.js'
  * @classdesc Initialises the Api server.
  */
 export default class {
-  static DATABASE_TYPE_SQLITE = constants.DATABASE_TYPE_SQLITE
-  static DATABASE_TYPE_MONGODB = constants.DATABASE_TYPE_MONGODB
+  static DATABASE_TYPE_SQLITE = Helper.DATABASE_TYPE_SQLITE
+  static DATABASE_TYPE_MONGODB = Helper.DATABASE_TYPE_MONGODB
   server = new Koa()
   router = new KoaRouter()
   constructor(config) {
-    this.config = setConfig(config)
+    this.config = Helper.setConfig(config)
     this.isConfigured = false
     this.server.context.test = {routes: {}, database: {}}
   }
@@ -64,7 +50,7 @@ export default class {
     }
     const {cert: httpsConfigCert} = httpsConfig
     if (proxy && Array.isArray(proxy)) {
-      const agent = httpsAgent(httpsConfigCert)
+      const agent = Helper.httpsAgent(httpsConfigCert)
       proxy.forEach(({route, target}) => {
         this.server.use(Proxy(route, {target, agent}))
       })
@@ -90,21 +76,9 @@ export default class {
     const {secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, usernameField} =
       this.config.account
     this.server.context.helper = {
-      getAbsolutePath,
-      fileExists,
-      directoryExists,
-      readJsonFile,
-      mkdir,
+      ...Helper,
       developerPrinter: this.config.system.developerPrinter,
-      middlewareHandler,
-      ...constants,
       formatedResponse,
-      httpClient
-    }
-    this.server.context.authentication = {
-      isSameHashed,
-      generateToken,
-      generateOTP,
       otpService: otp,
       sessionKey,
       ...authentication({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, usernameField})
@@ -153,9 +127,9 @@ export default class {
     }
   }
 
-  stop = (exit = constants.DONT_SHUTDOWN_SERVER) => {
+  stop = (exit = Helper.DONT_SHUTDOWN_SERVER) => {
     this.server.context.database.disconnect()
-    if (exit === constants.SHUTDOWN_SERVER) {
+    if (exit === Helper.SHUTDOWN_SERVER) {
       process.exit(0)
     }
   }

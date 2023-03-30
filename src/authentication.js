@@ -40,7 +40,7 @@ export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, use
         const {
           request,
           DBO: {accountotp, accountuser},
-          authentication: {isSameHashed}
+          helper: {isSameHashed}
         } = req.ctx
         const {otp} = request.body
         const user = username.replace(/\s/g, '')
@@ -91,7 +91,7 @@ export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, use
       },
       (req, jwtPayload, done) => {
         const {
-          authentication: {generateToken, sessionKey}
+          helper: {generateToken, sessionKey}
         } = req.ctx
         const {refreshToken} = generateToken(
           {id: jwtPayload.user.id},
@@ -160,7 +160,7 @@ export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, use
   }
 
   const login = ctx => {
-    const {passport, generateToken, sessionKey, generateOTP, otpService} = ctx.authentication
+    const {passport, generateToken, sessionKey, generateOTP, otpService} = ctx.helper
     const {sendOtp: otpInit} = ctx.request.body
     const {accountotp} = ctx.DBO
     const sendOtp = otpInit === true

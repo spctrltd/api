@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import {readJsonFile, hash} from '../helper.js'
+import Helper from '../helper.class.js'
 
 /**
  * Evaluates string to determine Database data type.
@@ -98,7 +98,7 @@ const setDataType = structure => {
  * @returns {Object}
  */
 export default (name, modelPath) => {
-  const config = readJsonFile(modelPath)
+  const config = Helper.readJsonFile(modelPath)
 
   if (config.model) {
     const models = mongoose.modelNames()
@@ -112,40 +112,43 @@ export default (name, modelPath) => {
       encryptPassword = false,
       passwordField = 'password',
       idField,
-      toJSON,
+      toJSON = {},
+      toObject = {},
       virtuals
     } = config.schema || {}
 
     const schema = new mongoose.Schema(modelStructure, {
       timestamps,
       versionKey,
-      toJSON
+      toJSON: virtuals ? {...toJSON, virtuals: true} : toJSON,
+      toObject: virtuals ? {...toObject, virtuals: true} : toObject
     })
 
     if (virtuals) {
       Object.keys(virtuals).forEach(virtualKey => {
-        const {options, ref, localField, foreignField} = virtuals[virtualKey]
-        schema.virtual(localField, {
-          // TODO: TEST POPULATE !!!
-          options,
-          ref,
-          localField,
-          foreignField
-        })
+        schema.virtual(virtualKey, virtuals[virtualKey])
       })
     }
 
-    if (encryptPassword) {
-      schema.pre('save', function (next) {
-        if (idField) {
-          this[idField] = this._id
-        }
+    schema.pre('save', function (next) {
+      if (idField) {
+        this[idField] = this._id
+      }
+      if (encryptPassword) {
         if (this.isModified(passwordField)) {
-          this[passwordField] = hash(this[passwordField])
+          this[passwordField] = Helper.hash(this[passwordField])
         }
-        return next()
-      })
-    }
+      }
+      return next()
+    })
+
+    schema.pre('updateOne', function (next) {
+      const doc = this.getUpdate()
+      if (doc[passwordField]) {
+        doc[passwordField] = Helper.hash(doc[passwordField])
+      }
+      return next()
+    })
 
     return {
       model: mongoose.model(name, schema),
