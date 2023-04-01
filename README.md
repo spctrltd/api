@@ -15,13 +15,13 @@ api.start()
 ```JS
 import Api, {Test} from '@spctrltd/api'
 const mongoDBConfig = {
-	database: {
-		type: Api.DATABASE_TYPE_MONGODB,
-		connectionString: 'mongodb://localhost:27017/spctr-api-unit-test'
-	},
-	test: {
-		shutdown: true
-	}
+  database: {
+    type: Api.DATABASE_TYPE_MONGODB,
+    connectionString: 'mongodb://localhost:27017/spctr-api-unit-test'
+  },
+  test: {
+    shutdown: true
+  }
 }
 
 const test = new Test(mongoDBConfig)
