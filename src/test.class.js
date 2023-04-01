@@ -74,7 +74,7 @@ export default class {
         this.emitter.emit('routes', key, flattenedResponse[key])
       })
     }
-    return passed
+    return {passed, response}
   }
 
   unitTestDatabase = async (id, operation, payload, isSuccessTest = Helper.IS_SUCCESS_TEST) => {
@@ -105,14 +105,14 @@ export default class {
         this.emitter.emit('database', id, response)
       }
     }
-    return passed
+    return {passed, response}
   }
 
-  outputResult = (result, label, data) => {
-    const color = result ? '42' : '41'
-    const resultText = result ? 'PASSED' : 'FAILED'
+  outputResult = ({passed, response}, label, data) => {
+    const color = passed ? '42' : '41'
+    const resultText = passed ? 'PASSED' : 'FAILED'
     console.info(`\x1b[${color}m%s\x1b[0m`, ` TEST: ${label} - ${resultText}`, data)
-    this.emitter.emit('count', result)
+    this.emitter.emit('count', passed)
   }
 
   start = () => {

@@ -9,7 +9,12 @@ import SHA256 from 'crypto-js/sha256.js'
 import {Op} from 'sequelize'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-
+/**
+ * Helper class
+ *
+ * @class Helper
+ * @classdesc Collection of helper functions and constants.
+ */
 export default class Helper {
   static IS_SQL = Symbol('IS_SQL')
   static IS_NOT_SQL = Symbol('IS_NOT_SQL')
@@ -30,6 +35,8 @@ export default class Helper {
 
   /**
    * Default token validity period in minutes.
+   *
+   * @memberof Helper
    * @type {Number}
    * @const
    */
@@ -37,6 +44,8 @@ export default class Helper {
 
   /**
    * Default refresh token validity period in minutes.
+   *
+   * @memberof Helper
    * @type {Number}
    * @const
    */
@@ -45,6 +54,7 @@ export default class Helper {
   /**
    * Get absolute path of file reletive to this file.
    *
+   * @memberof Helper
    * @function getAbsolutePath
    * @param {String} filePath - relative path to file.
    * @returns {String}
@@ -54,6 +64,7 @@ export default class Helper {
   /**
    * Get file stats
    *
+   * @memberof Helper
    * @function fileStat
    * @param {String} filePath - absolute path to file.
    * @returns {Promise<Object>}
@@ -72,6 +83,7 @@ export default class Helper {
   /**
    * Determine if file exists
    *
+   * @memberof Helper
    * @async
    * @function fileExists
    * @param {String} filePath - absolute path to file.
@@ -85,6 +97,7 @@ export default class Helper {
   /**
    * Determine if directory exists
    *
+   * @memberof Helper
    * @async
    * @function directoryExists
    * @param {String} directoryPath - absolute path to directory.
@@ -98,6 +111,7 @@ export default class Helper {
   /**
    * Instantiate an https agent
    *
+   * @memberof Helper
    * @function httpsAgent
    * @param {String} certificatePath - absolute path to ssl certificate.
    * @returns {Object}
@@ -117,6 +131,7 @@ export default class Helper {
   /**
    * Generate JWT
    *
+   * @memberof Helper
    * @function generateToken
    * @param {Object} user - a user object with at at least an id property.
    * @param {String} secret - the key used to encrypt the user.
@@ -148,6 +163,7 @@ export default class Helper {
    * Creates a directory recursively, creating
    * parent directories if they do not exist
    *
+   * @memberof Helper
    * @function mkdir
    * @param {Srting} path - absolute path to directory.
    */
@@ -162,6 +178,7 @@ export default class Helper {
   /**
    * Opens a JSON file and parses string to JS
    *
+   * @memberof Helper
    * @function readJsonFile
    * @param {Srting} path - absolute path to file.
    * @returns {Object|Array}
@@ -179,6 +196,7 @@ export default class Helper {
   /**
    * Opens a file and reads a number of bytes
    *
+   * @memberof Helper
    * @function peekIntoFile
    * @param {Srting} path - absolute path to file.
    * @param {Number} [readNumberOfBytes] - number of bytes to read.
@@ -196,6 +214,7 @@ export default class Helper {
    * Opens a JSON file and reads a number of bytes to determine
    * if the JSON data is an array.
    *
+   * @memberof Helper
    * @function isJsonArrayFile
    * @param {Srting} path - absolute path to JSON file.
    * @returns {Boolean}
@@ -208,6 +227,7 @@ export default class Helper {
   /**
    * Generate random number
    *
+   * @memberof Helper
    * @function randomSingleDigit
    * @returns {Number}
    */
@@ -216,6 +236,7 @@ export default class Helper {
   /**
    * Generate random string of numbers
    *
+   * @memberof Helper
    * @function generateOTP
    * @param {Number} [length] - maximum length of random string.
    * @returns {String}
@@ -230,6 +251,7 @@ export default class Helper {
   /**
    * Internal stdout development environment printer
    *
+   * @memberof Helper
    * @function developerPrinter
    * @param {Any} data - warning message.
    */
@@ -245,6 +267,7 @@ export default class Helper {
   /**
    * Internal stdout warning printer
    *
+   * @memberof Helper
    * @function warningPrinter
    * @param {String} data - warning message.
    */
@@ -255,6 +278,7 @@ export default class Helper {
   /**
    * Hash a string value
    *
+   * @memberof Helper
    * @function hash
    * @param {String} value - string to hash.
    * @returns {String}
@@ -264,6 +288,7 @@ export default class Helper {
   /**
    * Determine whether one string is equal to another when hashed
    *
+   * @memberof Helper
    * @function isSameHashed
    * @param {String} plainText - plain text string.
    * @param {String} hashedValue - hashed string.
@@ -274,6 +299,7 @@ export default class Helper {
   /**
    * Replace a mongoose operator with sequelize operator
    *
+   * @memberof Helper
    * @function sequelizeOpKeys
    * @param {String} key - A mongoose operator.
    * @returns {Symbol}
@@ -358,6 +384,7 @@ export default class Helper {
   /**
    * Replace a key or value within an object
    *
+   * @memberof Helper
    * @function replaceInObject
    * @param {Object} object - the object.
    * @param {Function} replacerFunction - the function used to replace the key or value.
@@ -389,6 +416,8 @@ export default class Helper {
 
   /**
    * Format a database query condition object for safe usage if required.
+   *
+   * @memberof Helper
    * @function gaurdedCondition
    * @param {object|null|undefined} [data] - Query condition.
    * @param {symbol} [isSql] - Whether used on SQL database.
@@ -415,6 +444,7 @@ export default class Helper {
   /**
    * Sets KoaRouter response body
    *
+   * @memberof Helper
    * @function formatedResponse
    * @param {Any} data - Response body.
    * @returns {String}
@@ -428,6 +458,7 @@ export default class Helper {
   /**
    * Sets KoaRouter middleware or controller response
    *
+   * @memberof Helper
    * @function middlewareHandler
    * @param {Object} ctx - KoaRouter controller object.
    * @param {Function} next - KoaRouter next function.
@@ -453,6 +484,8 @@ export default class Helper {
 
   /**
    * Default private encryption key.
+   *
+   * @memberof Helper
    * @type {String}
    * @const
    */
@@ -460,6 +493,8 @@ export default class Helper {
 
   /**
    * Default configuration object.
+   *
+   * @memberof Helper
    * @type {Object}
    * @const
    */
@@ -507,6 +542,8 @@ export default class Helper {
 
   /**
    * Configuration warning message object.
+   *
+   * @memberof Helper
    * @type {Object}
    * @const
    */
@@ -531,6 +568,7 @@ export default class Helper {
    * Set config object for a part of the app,
    * populating it with default values where absent.
    *
+   * @memberof Helper
    * @function generateConfig
    * @param {String} key - key for the config section to be populated.
    * @param {Object} config - config object defined by the user.
@@ -558,6 +596,7 @@ export default class Helper {
   /**
    * Set config object for the different parts of the app.
    *
+   * @memberof Helper
    * @function setConfig
    * @param {Object} [config] - config object defined by the user.
    * @returns {Object}
@@ -577,6 +616,7 @@ export default class Helper {
   /**
    * Create an array of absolute file paths.
    *
+   * @memberof Helper
    * @function createFileList
    * @param {String} directoryPath - The absolute path to directory.
    * @param {Array} extensions - An array will file extensions to include. Empty array includes all.
@@ -607,6 +647,8 @@ export default class Helper {
 
   /**
    * An http client.
+   *
+   * @memberof Helper
    * @type {Object}
    * @const
    */
@@ -690,6 +732,7 @@ export default class Helper {
   /**
    * Compare two objects to determine if both have the same keys.
    *
+   * @memberof Helper
    * @function hasAllKeys
    * @param {Object} a - The left comparison object.
    * @param {Object} b - The right comparison object.
@@ -733,6 +776,7 @@ export default class Helper {
   /**
    * Test an http method with a certain payload to match a predetermined output.
    *
+   * @memberof Helper
    * @async
    * @function testRoute
    * @param {String} method - The http request method.
@@ -758,6 +802,7 @@ export default class Helper {
   /**
    * Reduce an object to only one level of keys
    *
+   * @memberof Helper
    * @function flattenObject
    * @param {Object} object - The object to flatten.
    * @param {Object} [flattenedObject] - The flattened object passed in through recursion.
@@ -784,6 +829,7 @@ export default class Helper {
   /**
    * Replace templated keywords in config
    *
+   * @memberof Helper
    * @function testConfigReplacer
    * @param {String|Any} value - The value to replace.
    * @param {Object} store - The object to get the replacement value from.
@@ -811,6 +857,7 @@ export default class Helper {
   /**
    * Test a certain database operation with a certain payload to match a predetermined output.
    *
+   * @memberof Helper
    * @async
    * @function testDatabase
    * @param {Function} operation - The database operation.
@@ -832,6 +879,7 @@ export default class Helper {
   /**
    * Convert a string to camel case
    *
+   * @memberof Helper
    * @function toCamelcase
    * @param {String} text - The string to convert.
    * @param {String} delimeter - The character used to split the word.
