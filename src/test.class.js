@@ -1,4 +1,5 @@
 import {EventEmitter} from 'node:events'
+import prettier from 'prettier'
 import Api from './api.class.js'
 import Helper from './helper.class.js'
 
@@ -109,9 +110,16 @@ export default class {
   }
 
   outputResult = ({passed, response}, label, data) => {
-    const color = passed ? '42' : '41'
+    const color = passed ? 42 : 41
     const resultText = passed ? 'PASSED' : 'FAILED'
     console.info(`\x1b[${color}m%s\x1b[0m`, ` TEST: ${label} - ${resultText}`, data)
+    if (typeof response === 'object' && response !== null) {
+      console.info(`\x1b[${color - 10}m%s\x1b[0m`, 'OUTPUT')
+      console.log(prettier.format(JSON.stringify(response), {semi: false, parser: 'json'}))
+      console.info(`\x1b[${color - 10}m%s\x1b[0m`, '-------------')
+    } else {
+      console.info(`\x1b[${color - 10}m%s\x1b[0m`, 'NO OUTPUT AVAILABLE')
+    }
     this.emitter.emit('count', passed)
   }
 

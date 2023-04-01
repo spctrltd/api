@@ -11,42 +11,64 @@ const api = new Api()
 api.start()
 ```
 
+## Testing
+```JS
+import Api, {Test} from '@spctrltd/api'
+const mongoDBConfig = {
+	database: {
+		type: Api.DATABASE_TYPE_MONGODB,
+		connectionString: 'mongodb://localhost:27017/spctr-api-unit-test'
+	},
+	test: {
+		shutdown: true
+	}
+}
+
+const test = new Test(mongoDBConfig)
+test.start()
+```
+
 ## Default Config
 ```JS
 {
-	database: {
-		type: Api.DATABASE_TYPE_SQLITE, // currently only MongoDB and SQLite type
-		databaseFile: undefined, // if SQLite, creates file in root directory
-		memoryOnly: false, // SQLite only
-		defaultUser: {
-			username: 'superuser',
-			password: 'superpassword'
-		},
-		connectionString: undefined // MongoDB Only
-	},
-	server: {
-		sessionKey: defaultKey, // token encryption hash
-		formatedResponse, // a function that formats the http response data
-		httpsConfig: {
-			key: undefined, // fs.readFileSync('/app/server-private-key.pem'),
-			cert: undefined // fs.readFileSync('/app/server-certificate.pem')
-		},
-		uploadDir: '/tmp/dump',
-		allowCors: false,
-		port: 8000,
-		proxy: undefined
-	},
-	service: {
-		otp: otp => developerPrinter({otp}) // a function for sending the otp code. arguments = (otp, databaseObject)
-	},
-	account: {
-		secretKey: defaultKey, // encrypting JWT
-		usernameField: 'username', // the formfield when logging in
-		jwtExpiresInMinutes: defaultExpireToken, // 3 minutes
-		jwtRefreshExpiresInMinutes: defaultExpireRefresh // 5 minutes
-	},
-	system: {
-		developerPrinter // a function that print to STDOUT in deve enironment
-	}
+  database: {
+    type: Helper.DATABASE_TYPE_SQLITE, // currently only MongoDB and SQLite type
+    databaseFile: undefined, // if SQLite, creates file in project's root directory
+    memoryOnly: false, // SQLite only
+    defaultUser: {
+      username: 'superuser',
+      password: 'superpassword'
+    },
+    connectionString: undefined, // MongoDB Only
+    connectionOptions: {autoIndex: false} // MongoDB Only
+  },
+  server: {
+    sessionKey: Helper.defaultKey, // server token encryption hash
+    formatedResponse: Helper.formatedResponse, // a function that formats the http response data
+    httpsConfig: {
+      key: undefined, // fs.readFileSync('/app/server-private-key.pem'),
+      cert: undefined // fs.readFileSync('/app/server-certificate.pem')
+    },
+    uploadDir: '/tmp/dump',
+    allowCors: false,
+    port: 8000,
+    proxy: undefined,
+    morgan: ['common']
+  },
+  service: {
+    otp: otp => Helper.developerPrinter({otp}) // a function for sending the otp code. arguments = (otp, databaseObject) (see docs for example)
+  },
+  account: {
+    secretKey: Helper.defaultKey, // encrypting JWT
+    usernameField: 'username', // the formfield when logging in (see docs for example)
+    jwtExpiresInMinutes: Helper.defaultExpireToken, // 3 minutes
+    jwtRefreshExpiresInMinutes: Helper.defaultExpireRefresh // 5 minutes
+  },
+  system: {
+    developerPrinter: Helper.developerPrinter // a function that prints to STDOUT in dev enironment or debug mode (see docs for example)
+  },
+  test: {
+    shutdown: false // exit the running server after testing completes
+  }
 }
 ```

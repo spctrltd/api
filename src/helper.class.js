@@ -500,19 +500,19 @@ export default class Helper {
    */
   static defaultConfig = {
     database: {
-      type: Helper.DATABASE_TYPE_SQLITE,
-      databaseFile: undefined,
-      memoryOnly: false,
+      type: Helper.DATABASE_TYPE_SQLITE, // currently only MongoDB and SQLite type
+      databaseFile: undefined, // if SQLite, creates file in project's root directory
+      memoryOnly: false, // SQLite only
       defaultUser: {
         username: 'superuser',
         password: 'superpassword'
       },
-      connectionString: undefined,
-      connectionOptions: {autoIndex: false}
+      connectionString: undefined, // MongoDB Only
+      connectionOptions: {autoIndex: false} // MongoDB Only
     },
     server: {
-      sessionKey: Helper.defaultKey,
-      formatedResponse: Helper.formatedResponse,
+      sessionKey: Helper.defaultKey, // server token encryption hash
+      formatedResponse: Helper.formatedResponse, // a function that formats the http response data
       httpsConfig: {
         key: undefined, // fs.readFileSync('/app/server-private-key.pem'),
         cert: undefined // fs.readFileSync('/app/server-certificate.pem')
@@ -524,19 +524,19 @@ export default class Helper {
       morgan: ['common']
     },
     service: {
-      otp: otp => Helper.developerPrinter({otp})
+      otp: otp => Helper.developerPrinter({otp}) // a function for sending the otp code. arguments = (otp, databaseObject) (see docs for example)
     },
     account: {
-      secretKey: Helper.defaultKey,
-      usernameField: 'username',
-      jwtExpiresInMinutes: Helper.defaultExpireToken,
-      jwtRefreshExpiresInMinutes: Helper.defaultExpireRefresh
+      secretKey: Helper.defaultKey, // encrypting JWT
+      usernameField: 'username', // the formfield when logging in (see docs for example)
+      jwtExpiresInMinutes: Helper.defaultExpireToken, // 3 minutes
+      jwtRefreshExpiresInMinutes: Helper.defaultExpireRefresh // 5 minutes
     },
     system: {
-      developerPrinter: Helper.developerPrinter
+      developerPrinter: Helper.developerPrinter // a function that prints to STDOUT in dev enironment or debug mode (see docs for example)
     },
     test: {
-      shutdown: false
+      shutdown: false // exit the running server after testing completes
     }
   }
 
