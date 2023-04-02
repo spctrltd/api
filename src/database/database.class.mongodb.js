@@ -18,7 +18,10 @@ export default class extends Database {
    * @function init
    */
   init = async () => {
-    const {models, fields, tests} = await schemaLoader(Helper.DATABASE_TYPE_MONGODB)
+    const {models, fields, tests} = await schemaLoader(
+      Helper.DATABASE_TYPE_MONGODB,
+      this.userDataModelsPath
+    )
     this.models = models
     this.fields = fields
     this.tests = tests
@@ -49,6 +52,17 @@ export default class extends Database {
    */
   disconnect = async () => {
     await mongoose.disconnect()
+  }
+
+  /**
+   * Drop the database.
+   *
+   * @memberof MongoDatabase
+   * @async
+   * @function dropDatabase
+   */
+  dropDatabase = async () => {
+    await mongoose.connection.dropDatabase()
   }
 
   /**
@@ -281,21 +295,5 @@ export default class extends Database {
       }
     }
     return query
-  }
-
-  /**
-   * Check if options is valid.
-   *
-   * @memberof MongoDatabase
-   * @function hasOptions
-   * @param {Object} options - An object.
-   * @returns {Boolean}
-   */
-  hasOptions = options => {
-    if (Object.keys(options).length === 0) {
-      return false
-    }
-    // TODO: complete all conditions
-    return true
   }
 }

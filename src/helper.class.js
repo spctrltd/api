@@ -1,4 +1,4 @@
-import {stat, mkdirSync, readFileSync, readdirSync, readSync, openSync, closeSync} from 'fs'
+import {stat, mkdirSync, readFileSync, readdirSync, readSync, openSync, closeSync, rmSync} from 'fs'
 import https from 'https'
 import axios from 'axios'
 import moment from 'moment'
@@ -32,6 +32,8 @@ export default class Helper {
   static DONT_SHUTDOWN_SERVER = Symbol('DONT_SHUTDOWN_SERVER')
   static IS_FAILURE_TEST = Symbol('IS_FAILURE_TEST')
   static IS_SUCCESS_TEST = Symbol('IS_SUCCESS_TEST')
+  static DROP_TEST_DATABASE = Symbol('DROP_TEST_DATABASE')
+  static DONT_DROP_TEST_DATABASE = Symbol('DONT_DROP_TEST_DATABASE')
 
   /**
    * Default token validity period in minutes.
@@ -106,6 +108,20 @@ export default class Helper {
   static directoryExists = async directoryPath => {
     const stats = await Helper.fileStat(directoryPath)
     return stats.isDirectory && stats.isDirectory()
+  }
+
+  /**
+   * Delete a file
+   *
+   * @memberof Helper
+   * @async
+   * @function deleteFile
+   * @param {String} path - absolute path to file.
+   * @returns {Promise<Boolean>}
+   */
+  static deleteFile = async path => {
+    rmSync(path)
+    return await Helper.fileExists(path)
   }
 
   /**
@@ -501,14 +517,15 @@ export default class Helper {
   static defaultConfig = {
     database: {
       type: Helper.DATABASE_TYPE_SQLITE, // currently only MongoDB and SQLite type
-      databaseFile: undefined, // if SQLite, creates file in project's root directory
+      databaseFile: undefined, // if SQLite, creates file in project's root directory if undefined
       memoryOnly: false, // SQLite only
       defaultUser: {
         username: 'superuser',
         password: 'superpassword'
       },
       connectionString: undefined, // MongoDB Only
-      connectionOptions: {autoIndex: false} // MongoDB Only
+      connectionOptions: {autoIndex: false}, // MongoDB Only
+      userDataModelsPath: undefined // Absolute path to user-defined models
     },
     server: {
       sessionKey: Helper.defaultKey, // server token encryption hash
@@ -521,7 +538,8 @@ export default class Helper {
       allowCors: false,
       port: 8000,
       proxy: undefined,
-      morgan: ['common']
+      morgan: ['common'],
+      userRoutePath: undefined // Absolute path to user-defined routes (see docs for more details)
     },
     service: {
       otp: otp => Helper.developerPrinter({otp}) // a function for sending the otp code. arguments = (otp, databaseObject) (see docs for example)
@@ -536,7 +554,8 @@ export default class Helper {
       developerPrinter: Helper.developerPrinter // a function that prints to STDOUT in dev enironment or debug mode (see docs for example)
     },
     test: {
-      shutdown: false // exit the running server after testing completes
+      shutdown: false, // exit the running server after testing completes
+      dropDatabase: false // drop the test database
     }
   }
 
@@ -575,10 +594,19 @@ export default class Helper {
    * @returns {Object}
    */
   static generateConfig = (key, config) => {
-    const configured = Object.keys(config).reduce(
-      (cfg, currentKey) => ({...cfg, [currentKey]: config[currentKey]}),
-      Helper.defaultConfig[key]
-    )
+    const configured = Object.keys(config).reduce((cfg, currentKey) => {
+      let currentCfg = config[currentKey]
+      if (typeof currentCfg === 'object' && !Array.isArray(currentCfg) && currentCfg !== null) {
+        currentCfg = {
+          ...cfg[currentKey],
+          ...currentCfg
+        }
+      }
+      return {
+        ...cfg,
+        [currentKey]: currentCfg
+      }
+    }, Helper.defaultConfig[key])
 
     if (Object.prototype.hasOwnProperty.call(Helper.configWarnings, key)) {
       const configMessages = Helper.configWarnings[key]
@@ -744,6 +772,9 @@ export default class Helper {
    * @returns {Boolean}
    */
   static hasAllKeys = (a, b, recursively = false, alsoMatchValues = false) => {
+    if (!a || !b) {
+      return false
+    }
     if (Array.isArray(a)) {
       if (a.length !== b.length) {
         return false

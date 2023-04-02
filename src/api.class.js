@@ -113,7 +113,10 @@ export default class {
    */
   configureRouter = async () => {
     // middleware
-    this.server.context.test.routes = await routeBuilder(this.router)
+    this.server.context.test.routes = await routeBuilder(
+      this.router,
+      this.config.server.userRoutePath
+    )
     this.server.use(this.router.routes()).use(this.router.allowedMethods())
   }
 
@@ -179,10 +182,19 @@ export default class {
    *
    * @memberof Api
    * @function stop
+   * @async
    */
-  stop = (exit = Helper.DONT_SHUTDOWN_SERVER) => {
-    this.server.context.database.disconnect()
-    if (exit === Helper.SHUTDOWN_SERVER) {
+  stop = async (options = {}, testOptions = {}) => {
+    const {exit = Helper.DONT_SHUTDOWN_SERVER} = options
+    const {
+      exit: exitAfterTest = Helper.DONT_SHUTDOWN_SERVER,
+      dropDatabase = Helper.DONT_DROP_TEST_DATABASE
+    } = testOptions
+    if (dropDatabase === Helper.DROP_TEST_DATABASE) {
+      await this.server.context.database.dropDatabase()
+    }
+    await this.server.context.database.disconnect()
+    if (exit === Helper.SHUTDOWN_SERVER || exitAfterTest === Helper.SHUTDOWN_SERVER) {
       process.exit(0)
     }
   }

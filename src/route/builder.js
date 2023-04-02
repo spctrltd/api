@@ -3,7 +3,6 @@
  *
  * @module route/builder
  */
-import {resolve} from 'path'
 import Helper from '../helper.class.js'
 
 const AsyncFunction = async function () {}.constructor
@@ -89,13 +88,14 @@ const createConfigList = async (routePath, list = {}) => {
 /**
  * Find, load and build routes from config files.
  *
+ * @name routeBuilder
  * @async
  * @param {KoaRouter} router - KoaRouter instance.
+ * @param {String} userRoutePath - Absolute path to user-defined routes.
  */
-export default async router => {
+export default async (router, userRoutePath) => {
   const routePath = Helper.getAbsolutePath('./route')
   let configList = await createConfigList(routePath)
-  const userRoutePath = `${resolve('.')}/route`
   const doesExist = await Helper.directoryExists(`${userRoutePath}/config`)
   if (doesExist) {
     configList = await createConfigList(userRoutePath, configList)

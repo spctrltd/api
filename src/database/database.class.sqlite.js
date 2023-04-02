@@ -38,13 +38,18 @@ export default class extends Database {
       storage
     })
 
-    const {fields, tests} = await schemaLoader(Helper.DATABASE_TYPE_SQLITE, this.sequelize)
+    const {fields, tests, virtuals} = await schemaLoader(
+      Helper.DATABASE_TYPE_SQLITE,
+      this.userDataModelsPath,
+      this.sequelize
+    )
     await this.sequelize.sync()
     // TODO: migrations
     await this.initAccount()
     this.models = this.sequelize.models
     this.fields = fields
     this.tests = tests
+    this.virtuals = virtuals
     this.defineModels()
   }
 
@@ -70,6 +75,17 @@ export default class extends Database {
    */
   disconnect = async () => {
     await this.sequelize.close()
+  }
+
+  /**
+   * Drop the database.
+   *
+   * @memberof SQLiteDatabase
+   * @async
+   * @function dropDatabase
+   */
+  dropDatabase = async () => {
+    await Helper.deleteFile(this.sequelize.options.storage)
   }
 
   /**
@@ -107,12 +123,15 @@ export default class extends Database {
    */
   findOne = async (model, data, options = {}) => {
     try {
-      return await this.sequelize.models[model].findOne(
-        Helper.gaurdedCondition(data, Helper.IS_SQL)
-      )
+      const where = {
+        ...Helper.gaurdedCondition(data, Helper.IS_SQL),
+        ...this.setSelectOptions(model, options)
+      }
+      const response = await this.sequelize.models[model].findOne(where)
+      return response !== null ? response.toJSON() : null
     } catch (error) {
       Helper.developerPrinter(error)
-      return {}
+      return undefined
     }
   }
 
@@ -129,10 +148,14 @@ export default class extends Database {
    */
   findById = async (model, id, options = {}) => {
     try {
-      return await this.sequelize.models[model].findByPk(id)
+      const response = await this.sequelize.models[model].findByPk(
+        id,
+        this.setSelectOptions(model, options)
+      )
+      return response !== null ? response.toJSON() : null
     } catch (error) {
       Helper.developerPrinter(error)
-      return {}
+      return undefined
     }
   }
 
@@ -148,12 +171,15 @@ export default class extends Database {
    */
   find = async (model, data, options = {}) => {
     try {
-      return await this.sequelize.models[model].findAll(
-        Helper.gaurdedCondition(data, Helper.IS_SQL)
-      )
+      const where = {
+        ...Helper.gaurdedCondition(data, Helper.IS_SQL),
+        ...this.setSelectOptions(model, options)
+      }
+      const responses = await this.sequelize.models[model].findAll(where)
+      return responses !== null ? responses.map(response => response.toJSON()) : null
     } catch (error) {
       Helper.developerPrinter(error)
-      return []
+      return undefined
     }
   }
 
@@ -169,10 +195,11 @@ export default class extends Database {
    */
   insert = async (model, data) => {
     try {
-      return await this.sequelize.models[model].create(data)
+      const response = await this.sequelize.models[model].create(data)
+      return response !== null ? response.toJSON() : null
     } catch (error) {
       Helper.developerPrinter(error)
-      return {}
+      return undefined
     }
   }
 
@@ -189,11 +216,12 @@ export default class extends Database {
    */
   updateOne = async (model, where, data) => {
     try {
-      const {affectedCount} = await this.sequelize.models[model].update(data, {
+      const response = await this.sequelize.models[model].update(data, {
         ...Helper.gaurdedCondition(where, Helper.IS_SQL),
         limit: 1
       })
-      return parseInt(affectedCount)
+      const count = Array.isArray(response) ? response[0] : response
+      return parseInt(count)
     } catch (error) {
       Helper.developerPrinter(error)
       return -1
@@ -213,11 +241,12 @@ export default class extends Database {
    */
   update = async (model, where, data) => {
     try {
-      const {affectedCount} = await this.sequelize.models[model].update(
+      const response = await this.sequelize.models[model].update(
         data,
         Helper.gaurdedCondition(where, Helper.IS_SQL)
       )
-      return parseInt(affectedCount)
+      const count = Array.isArray(response) ? response[0] : response
+      return parseInt(count)
     } catch (error) {
       Helper.developerPrinter(error)
       return -1
@@ -241,7 +270,7 @@ export default class extends Database {
       return await this.findOne(model, where)
     } catch (error) {
       Helper.developerPrinter(error)
-      return {}
+      return undefined
     }
   }
 
@@ -265,5 +294,32 @@ export default class extends Database {
       Helper.developerPrinter(error)
       return -1
     }
+  }
+
+  /**
+   * Validate and create options object.
+   *
+   * @memberof Database
+   * @function setSelectOptions
+   * @param {String} modelName - Name of the database model.
+   * @param {Object} options - An object.
+   * @returns {Object}
+   */
+  setSelectOptions = (modelName, options) => {
+    if (!this.hasOptions(options)) {
+      return {}
+    }
+    const {populate} = options
+    const virtuals = this.virtuals[modelName]
+    const selectOptions = {}
+    if (Array.isArray(populate) && populate.length > 0) {
+      const populateQuery = []
+      populate.forEach(populateKey => {
+        const modelObject = this.sequelize.models[virtuals[populateKey].ref]
+        populateQuery.push({model: modelObject, as: populateKey})
+      })
+      selectOptions.include = populateQuery
+    }
+    return selectOptions
   }
 }

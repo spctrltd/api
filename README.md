@@ -14,6 +14,8 @@ api.start()
 ## Testing
 ```JS
 import Api, {Test} from '@spctrltd/api'
+import path from 'path'
+
 const mongoDBConfig = {
   database: {
     type: Api.DATABASE_TYPE_MONGODB,
@@ -21,6 +23,17 @@ const mongoDBConfig = {
   },
   test: {
     shutdown: true
+  }
+}
+
+const sqliteConfig = {
+  database: {
+    type: Api.DATABASE_TYPE_SQLITE,
+    databaseFile: `${path.resolve('.')}/datastore/spctr-api-unit-test.db`
+  },
+  test: {
+    shutdown: true,
+	  dropDatabase: true
   }
 }
 

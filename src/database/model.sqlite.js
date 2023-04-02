@@ -86,7 +86,7 @@ const evalDataType = data => {
  */
 const setDataType = (structure, options = {}) => {
   if (typeof structure === 'object') {
-    const {encryptPassword = false, passwordField = 'password', idField, virtuals} = options
+    const {encryptPassword = false, passwordField = 'password', idField = 'id'} = options
 
     return Object.keys(structure).reduce((acc, key) => {
       let dataType = evalDataType(structure[key])
@@ -103,16 +103,6 @@ const setDataType = (structure, options = {}) => {
           ...dataType,
           autoIncrement: true,
           primaryKey: true
-        }
-      }
-      if (virtuals && Object.prototype.hasOwnProperty.call(virtuals, key)) {
-        const {ref, foreignField} = virtuals[key]
-        dataType = {
-          ...dataType,
-          references: {
-            model: ref,
-            key: foreignField
-          }
         }
       }
       return {
@@ -143,7 +133,7 @@ export default async (name, modelPath, sequelize) => {
       return {model: sequelize.models[name]}
     }
     const modelStructure = setDataType(config.model, config.schema)
-    const {timestamps = true} = config.schema || {}
+    const {timestamps = true, virtuals} = config.schema || {}
 
     const sqlModel = class extends Model {}
 
@@ -154,7 +144,12 @@ export default async (name, modelPath, sequelize) => {
       freezeTableName: true
     })
 
-    return {model: sequelize.models[name], fields: Object.keys(config.model), test: config.test}
+    return {
+      model: sequelize.models[name],
+      fields: Object.keys(config.model),
+      test: config.test,
+      virtuals
+    }
   }
 
   return null

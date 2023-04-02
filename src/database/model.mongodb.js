@@ -116,7 +116,7 @@ export default (name, modelPath) => {
       versionKey = false,
       encryptPassword = false,
       passwordField = 'password',
-      idField,
+      idField = 'id',
       toJSON = {},
       toObject = {},
       virtuals
@@ -158,7 +158,8 @@ export default (name, modelPath) => {
     return {
       model: mongoose.model(name, schema),
       fields: Object.keys(config.model),
-      test: config.test
+      test: config.test,
+      virtuals
     }
   }
 

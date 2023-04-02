@@ -6,13 +6,21 @@
  */
 export default class {
   constructor(options) {
-    const {databaseFile, memoryOnly, defaultUser, connectionString, connectionOptions} = options
+    const {
+      databaseFile,
+      memoryOnly,
+      defaultUser,
+      connectionString,
+      connectionOptions,
+      userDataModelsPath
+    } = options
 
     this.defaultUser = defaultUser
     this.databaseFile = databaseFile
     this.memoryOnly = memoryOnly
     this.connectionString = connectionString
     this.connectionOptions = connectionOptions
+    this.userDataModelsPath = userDataModelsPath
 
     this.connection = null
     this.sequelize = null
@@ -20,6 +28,7 @@ export default class {
     this.DBO = {}
     this.fields = {}
     this.tests = {}
+    this.virtuals = {}
   }
 
   /**
@@ -66,5 +75,21 @@ export default class {
         upsert: (where, data) => this.upsert(model, where, data)
       }
     })
+  }
+
+  /**
+   * Check if options is valid.
+   *
+   * @memberof Database
+   * @function hasOptions
+   * @param {Object} options - An object.
+   * @returns {Boolean}
+   */
+  hasOptions = options => {
+    if (Object.keys(options).length === 0) {
+      return false
+    }
+    // TODO: complete all conditions
+    return true
   }
 }

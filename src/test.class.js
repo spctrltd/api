@@ -15,7 +15,7 @@ export default class {
   databaseStore = {}
   count = 0
   passed = 0
-  constructor(config) {
+  constructor(config = {}) {
     this.config = Helper.setConfig({
       ...config,
       server: {
@@ -75,7 +75,7 @@ export default class {
         this.emitter.emit('routes', key, flattenedResponse[key])
       })
     }
-    return {passed, response}
+    return {passed, response, expected: {status: expectedStatus, body: expectedBody}}
   }
 
   unitTestDatabase = async (id, operation, payload, isSuccessTest = Helper.IS_SUCCESS_TEST) => {
@@ -106,17 +106,20 @@ export default class {
         this.emitter.emit('database', id, response)
       }
     }
-    return {passed, response}
+    return {passed, response, expected: newExpectedOutput}
   }
 
-  outputResult = ({passed, response}, label, data) => {
+  outputResult = ({passed, response, expected}, label, data) => {
     const color = passed ? 42 : 41
     const resultText = passed ? 'PASSED' : 'FAILED'
+    console.info('\n\r')
     console.info(`\x1b[${color}m%s\x1b[0m`, ` TEST: ${label} - ${resultText}`, data)
     if (typeof response === 'object' && response !== null) {
-      console.info(`\x1b[${color - 10}m%s\x1b[0m`, 'OUTPUT')
+      console.info(`\x1b[${color - 10}m%s\x1b[0m`, 'EXPECTED OUTPUT:')
+      console.log(prettier.format(JSON.stringify(expected), {semi: false, parser: 'json'}))
+      console.info(`\x1b[${color - 10}m%s\x1b[0m`, 'ACTUAL OUTPUT:')
       console.log(prettier.format(JSON.stringify(response), {semi: false, parser: 'json'}))
-      console.info(`\x1b[${color - 10}m%s\x1b[0m`, '-------------')
+      console.info(`\x1b[${color - 10}m%s\x1b[0m`, '==================================')
     } else {
       console.info(`\x1b[${color - 10}m%s\x1b[0m`, 'NO OUTPUT AVAILABLE')
     }
@@ -195,10 +198,14 @@ export default class {
         console.info(`\x1b[47m%s\x1b[0m`, ` FAILED: ${this.count - this.passed} `)
         console.info(`\x1b[47m%s\x1b[0m`, ` PASSED: ${this.passed} `)
 
-        const shutdown = this.config.test.shutdown
+        const exit = this.config.test.shutdown
           ? Helper.SHUTDOWN_SERVER
           : Helper.DONT_SHUTDOWN_SERVER
-        api.stop(shutdown)
+
+        const dropDatabase = this.config.test.dropDatabase
+          ? Helper.DROP_TEST_DATABASE
+          : Helper.DONT_DROP_TEST_DATABASE
+        api.stop(undefined, {exit, dropDatabase})
       })
       .catch(error => {
         console.error(error)
