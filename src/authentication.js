@@ -1,11 +1,33 @@
+/**
+ * Session authentication functions
+ *
+ * @module authentication
+ */
 import passport from 'koa-passport'
 import {ExtractJwt as extractJwt, Strategy as JwtStrategy} from 'passport-jwt'
 import {Strategy as LocalStrategy} from 'passport-local'
 import moment from 'moment'
 
+/**
+ * Default template used for authentication response.
+ *
+ * @type {String}
+ * @const
+ */
 const responseTemplate = {status: 200, body: null}
 
-export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, usernameField}) => {
+/**
+ * Setup session authentication functions.
+ *
+ * @name authentication
+ * @function
+ * @param {String} secretKey - the private key used to encrypt the JWT.
+ * @param {Number} jwtExpiresInMinutes - how long the JWT will be valid for.
+ * @param {Number} jwtRefreshExpiresInMinutes - how long the Refresh JWT will be valid for.
+ * @param {String} usernameField - the formfield when logging in (see docs for example).
+ * @returns {Object}
+ */
+export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, usernameField) => {
   const getUser = async (user, accountuser) => {
     const username = user.includes('@') ? 'email' : 'username'
     const data = await accountuser.findOne({[username]: user})
@@ -104,6 +126,14 @@ export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, use
     )
   )
 
+  /**
+   * Verify a JWT token.
+   *
+   * @async
+   * @function verify
+   * @param {Object} ctx - the Koa Router context object.
+   * @returns {Promise<Object>}
+   */
   const verify = ctx => {
     return new Promise(resolve => {
       const returnValue = {...responseTemplate}
@@ -118,6 +148,14 @@ export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, use
     })
   }
 
+  /**
+   * Refresh a JWT token.
+   *
+   * @async
+   * @function refresh
+   * @param {Object} ctx - the Koa Router context object.
+   * @returns {Promise<Object>}
+   */
   const refresh = ctx => {
     return new Promise(resolve => {
       const returnValue = {...responseTemplate}
@@ -135,6 +173,14 @@ export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, use
     })
   }
 
+  /**
+   * Checks whether JWT token is valid.
+   *
+   * @async
+   * @function isAuthenticated
+   * @param {Object} ctx - the Koa Router context object.
+   * @returns {Promise<Boolean>}
+   */
   const isAuthenticated = ctx => {
     return new Promise(resolve => {
       passport.authenticate('sessionValidation', (err, authed) => {
@@ -147,6 +193,13 @@ export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, use
     })
   }
 
+  /**
+   * Checks whether JWT token is valid and returns the decrypted user object.
+   *
+   * @function getAuthenticatedUser
+   * @param {Object} ctx - the Koa Router context object.
+   * @returns {Promise<Object>}
+   */
   const getAuthenticatedUser = ctx => {
     return new Promise(resolve => {
       passport.authenticate('sessionValidation', (err, authed, user) => {
@@ -159,6 +212,13 @@ export default ({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, use
     })
   }
 
+  /**
+   * Login middleware.
+   *
+   * @function login
+   * @param {Object} ctx - the Koa Router context object.
+   * @returns {Promise<Object>}
+   */
   const login = ctx => {
     const {passport, generateToken, sessionKey, generateOTP, otpService} = ctx.helper
     const {sendOtp: otpInit} = ctx.request.body

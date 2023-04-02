@@ -1,3 +1,8 @@
+/**
+ * Interprets config data to construct a database model.
+ *
+ * @module model/mongodb
+ */
 import mongoose from 'mongoose'
 import Helper from '../helper.class.js'
 

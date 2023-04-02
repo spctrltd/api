@@ -45,7 +45,7 @@ export default class extends Database {
    *
    * @memberof MongoDatabase
    * @async
-   * @function connect
+   * @function disconnect
    */
   disconnect = async () => {
     await mongoose.disconnect()

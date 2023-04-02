@@ -1,3 +1,8 @@
+/**
+ * Interprets config data to construct a database model.
+ *
+ * @module model/sqlite
+ */
 import {DataTypes, Model} from 'sequelize'
 import Helper from '../helper.class.js'
 

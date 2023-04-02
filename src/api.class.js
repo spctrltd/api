@@ -29,6 +29,13 @@ export default class {
     this.server.context.test = {routes: {}, database: {}}
   }
 
+  /**
+   * Configures the database settings
+   *
+   * @memberof Api
+   * @function configureDatabase
+   * @async
+   */
   configureDatabase = async () => {
     const database = new DatabaseBuilder(this.config.database)
     this.server.context.database = await database.init()
@@ -36,6 +43,12 @@ export default class {
     this.server.context.test.database = this.server.context.database.tests
   }
 
+  /**
+   * Configures the server settings
+   *
+   * @memberof Api
+   * @function configureServer
+   */
   configureServer = () => {
     const {
       httpsConfig,
@@ -70,6 +83,12 @@ export default class {
     }
   }
 
+  /**
+   * Configures the helper that is passed to the Koa Router context.
+   *
+   * @memberof Api
+   * @function configureHelpers
+   */
   configureHelpers = () => {
     const {otp} = this.config.service
     const {sessionKey, formatedResponse} = this.config.server
@@ -81,21 +100,41 @@ export default class {
       formatedResponse,
       otpService: otp,
       sessionKey,
-      ...authentication({secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, usernameField})
+      ...authentication(secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, usernameField)
     }
   }
 
+  /**
+   * Configures Koa Router.
+   *
+   * @memberof Api
+   * @function configureRouter
+   * @async
+   */
   configureRouter = async () => {
     // middleware
     this.server.context.test.routes = await routeBuilder(this.router)
     this.server.use(this.router.routes()).use(this.router.allowedMethods())
   }
 
+  /**
+   * Configures authentication middleware generally used with the router.
+   *
+   * @memberof Api
+   * @function configureAuthentication
+   */
   configureAuthentication = () => {
     this.server.use(passport.initialize())
     this.server.use(passport.session())
   }
 
+  /**
+   * Calls all configuration functions in order.
+   *
+   * @memberof Api
+   * @function configure
+   * @async
+   */
   configure = async () => {
     this.configureHelpers()
     await this.configureDatabase()
@@ -105,6 +144,14 @@ export default class {
     this.isConfigured = true
   }
 
+  /**
+   * Starts the HTTP Server.
+   *
+   * @memberof Api
+   * @function start
+   * @async
+   * @returns {Promise<Object>}
+   */
   start = async () => {
     if (!this.isConfigured) {
       await this.configure()
@@ -127,6 +174,12 @@ export default class {
     }
   }
 
+  /**
+   * Stops the entire app.
+   *
+   * @memberof Api
+   * @function stop
+   */
   stop = (exit = Helper.DONT_SHUTDOWN_SERVER) => {
     this.server.context.database.disconnect()
     if (exit === Helper.SHUTDOWN_SERVER) {

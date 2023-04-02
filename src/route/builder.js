@@ -1,3 +1,8 @@
+/**
+ * Facilitates the loading of api routes.
+ *
+ * @module route/builder
+ */
 import {resolve} from 'path'
 import Helper from '../helper.class.js'
 

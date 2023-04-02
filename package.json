@@ -4,7 +4,7 @@
   "description": "general http api",
   "main": "index.js",
   "scripts": {
-    "doc": "jsdoc -c jsdoc-config.json -t node_modules/clean-jsdoc-theme",
+    "doc": "jsdoc -c jsdoc-config.json -t node_modules/clean-jsdoc-theme -R ./README.md",
     "publish": "sh ./publish.sh"
   },
   "author": "Charles Johannisen, SPCTR",

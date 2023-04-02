@@ -1,3 +1,8 @@
+/**
+ * Facilitates the loading of a database model.
+ *
+ * @module loadSchemas
+ */
 import path from 'path'
 import mongodbModel from './model.mongodb.js'
 import sqliteModel from './model.sqlite.js'
@@ -6,6 +11,8 @@ import Helper from '../helper.class.js'
 /**
  * Load config file and build database models.
  *
+ * @name loadSchemas
+ * @function
  * @async
  * @param {Symbol} databaseType - The database type.
  * @param {Sequelize|undefined} sequelize - If for SQL database, requires Sequelize.

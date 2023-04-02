@@ -648,6 +648,7 @@ export default class Helper {
   /**
    * An http client.
    *
+   * @name httpClient
    * @memberof Helper
    * @type {Object}
    * @const
@@ -656,6 +657,7 @@ export default class Helper {
     /**
      * POST method http client.
      *
+     * @memberof httpClient
      * @async
      * @function post
      * @param {String} url - An absolute url.
@@ -680,6 +682,7 @@ export default class Helper {
     /**
      * GET method http client.
      *
+     * @memberof httpClient
      * @async
      * @function post
      * @param {String} url - An absolute url.
@@ -703,6 +706,7 @@ export default class Helper {
     /**
      * ANY method http client.
      *
+     * @memberof httpClient
      * @async
      * @function any
      * @param {String} method - The request method eg. POST, GET, etc.
