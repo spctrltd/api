@@ -92,4 +92,29 @@ export default class {
     // TODO: complete all conditions
     return true
   }
+
+  /**
+   * Restructure the populate instruction.
+   *
+   * @memberof Database
+   * @function restructurePopulate
+   * @param {Object} populate - An object.
+   * @returns {Object}
+   */
+  restructurePopulate = populate => {
+    if (Array.isArray(populate)) {
+      return populate.map(value => this.restructurePopulate(value))
+    }
+    if (typeof populate !== 'object') {
+      return {path: populate}
+    }
+
+    const {path, select} = populate
+    if (typeof select !== 'object' || Array.isArray(select) || select === null) {
+      return {path}
+    }
+
+    const selectType = select[Object.keys(select)[0]] === 0 ? 'exclude' : 'include'
+    return {path, select: {[selectType]: Object.keys(select)}}
+  }
 }

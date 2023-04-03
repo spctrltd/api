@@ -5,8 +5,6 @@
  */
 import Helper from '../helper.class.js'
 
-const AsyncFunction = async function () {}.constructor
-
 /**
  * Opens and reads in JSON config file.
  *
@@ -23,13 +21,7 @@ const getMiddleware = async (middlewarePath, middlewareName, middlewarePathExist
     const middlewareExists = await Helper.fileExists(middlewareFilePath)
     if (middlewareExists) {
       const middlewareFunction = await import(middlewareFilePath)
-      return async (ctx, next) => {
-        if (middlewareFunction.default instanceof AsyncFunction) {
-          return await middlewareFunction.default(ctx, next)
-        } else {
-          return middlewareFunction.default(ctx, next)
-        }
-      }
+      return middlewareFunction.default
     }
   }
   return null

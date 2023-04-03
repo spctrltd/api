@@ -46,14 +46,15 @@ test.start()
 {
   database: {
     type: Helper.DATABASE_TYPE_SQLITE, // currently only MongoDB and SQLite type
-    databaseFile: undefined, // if SQLite, creates file in project's root directory
+    databaseFile: undefined, // if SQLite, creates file in project's root directory if undefined
     memoryOnly: false, // SQLite only
     defaultUser: {
       username: 'superuser',
       password: 'superpassword'
     },
     connectionString: undefined, // MongoDB Only
-    connectionOptions: {autoIndex: false} // MongoDB Only
+    connectionOptions: {autoIndex: false}, // MongoDB Only
+    userDataModelsPath: undefined // Absolute path to user-defined models
   },
   server: {
     sessionKey: Helper.defaultKey, // server token encryption hash
@@ -66,7 +67,8 @@ test.start()
     allowCors: false,
     port: 8000,
     proxy: undefined,
-    morgan: ['common']
+    morgan: ['common'],
+    userRoutePath: undefined // Absolute path to user-defined routes (see docs for more details)
   },
   service: {
     otp: otp => Helper.developerPrinter({otp}) // a function for sending the otp code. arguments = (otp, databaseObject) (see docs for example)
@@ -81,7 +83,8 @@ test.start()
     developerPrinter: Helper.developerPrinter // a function that prints to STDOUT in dev enironment or debug mode (see docs for example)
   },
   test: {
-    shutdown: false // exit the running server after testing completes
+    shutdown: false, // exit the running server after testing completes
+    dropDatabase: false // drop the test database
   }
 }
 ```

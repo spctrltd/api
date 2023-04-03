@@ -314,9 +314,10 @@ export default class extends Database {
     const selectOptions = {}
     if (Array.isArray(populate) && populate.length > 0) {
       const populateQuery = []
-      populate.forEach(populateKey => {
-        const modelObject = this.sequelize.models[virtuals[populateKey].ref]
-        populateQuery.push({model: modelObject, as: populateKey})
+      const populateArray = this.restructurePopulate(populate)
+      populateArray.forEach(({path, select: attributes}) => {
+        const modelObject = this.sequelize.models[virtuals[path].ref]
+        populateQuery.push({model: modelObject, as: path, attributes})
       })
       selectOptions.include = populateQuery
     }

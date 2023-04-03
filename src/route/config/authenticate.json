@@ -5,13 +5,14 @@
 		"public": true,
 		"middleware": "login",
 		"test": {
-			"001": {
+			"100": {
 				"label": "Log In with just username and password",
 				"success": {
+					"match": "key",
 					"payload": {
 						"body": {
-							"username": "superuser",
-							"password": "superpassword"
+							"username": "testuser",
+            				"password": "testpassword123"
 						}
 					},
 					"status": 200,
@@ -25,28 +26,31 @@
 					}
 				},
 				"failure": {
+					"match": "key",
 					"payload": {
 						"body": {
-							"username": "superuser",
+							"username": "testuser",
 							"password": "password"
 						}
 					},
 					"status": 403
 				}
 			},
-			"002": {
+			"101": {
 				"label": "Log In and Request OTP",
 				"success": {
+					"match": "key",
 					"payload": {
 						"body": {
-							"username": "superuser",
-							"password": "superpassword",
+							"username": "testuser",
+            				"password": "testpassword123",
 							"sendOtp": true
 						}
 					},
 					"status": 200
 				},
 				"failure": {
+					"match": "key",
 					"payload": {
 						"body": {
 							"username": "superuser",
@@ -57,13 +61,14 @@
 					"status": 403
 				}
 			},
-			"003": {
+			"102": {
 				"label": "Log In with received OTP",
 				"success": {
+					"match": "key",
 					"payload": {
 						"body": {
-							"username": "superuser",
-							"password": "superpassword",
+							"username": "testuser",
+            				"password": "testpassword123",
 							"otp": "[$cache$otp]"
 						}
 					},
@@ -78,6 +83,7 @@
 					}
 				},
 				"failure": {
+					"match": "key",
 					"payload": {
 						"body": {
 							"username": "superuser",

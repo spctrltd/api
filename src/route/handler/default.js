@@ -1,3 +1,3 @@
-export default async ctx => {
+export default ctx => {
   ctx.body = ctx.helper.formatedResponse({hello: ':)'})
 }

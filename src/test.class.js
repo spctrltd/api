@@ -41,23 +41,17 @@ export default class {
     })
   }
 
-  unitTestRoute = async (
-    id,
-    method,
-    url,
-    payload,
-    expectedStatus,
-    expectedBody,
-    isSuccessTest = Helper.IS_SUCCESS_TEST
-  ) => {
+  unitTestRoute = async (id, method, url, testData, isSuccessTest = Helper.IS_SUCCESS_TEST) => {
+    const {payload, status, body, match} = testData
     const replacer = value => Helper.testConfigReplacer(value, this.routeStore)
     const newPayload = Helper.replaceInObject(payload, replacer, Helper.REPLACE_VALUE)
     const {passed, response} = await Helper.testRoute(
       method,
       url,
       newPayload,
-      expectedStatus,
-      expectedBody
+      status,
+      body,
+      Helper.getMatchSymbol(match)
     )
     if (
       response &&
@@ -75,7 +69,7 @@ export default class {
         this.emitter.emit('routes', key, flattenedResponse[key])
       })
     }
-    return {passed, response, expected: {status: expectedStatus, body: expectedBody}}
+    return {passed, response, expected: {status, body}}
   }
 
   unitTestDatabase = async (id, operation, payload, isSuccessTest = Helper.IS_SUCCESS_TEST) => {
@@ -89,7 +83,8 @@ export default class {
     const {passed, response} = await Helper.testDatabase(
       operation,
       newParameters,
-      newExpectedOutput
+      newExpectedOutput,
+      Helper.getMatchSymbol(payload.match)
     )
     if (isSuccessTest === Helper.IS_SUCCESS_TEST) {
       if (response && typeof response === 'object') {
@@ -162,14 +157,7 @@ export default class {
             const {method, endpoint, success, failure, label} = routes[testId]
             const url = `${baseUrl}${endpoint}`
             if (success) {
-              const successResult = await this.unitTestRoute(
-                testId,
-                method,
-                url,
-                success.payload,
-                success.status,
-                success.body
-              )
+              const successResult = await this.unitTestRoute(testId, method, url, success)
 
               this.outputResult(successResult, `"${label}" to Pass`, `${method} ${endpoint}`)
             }
@@ -178,9 +166,7 @@ export default class {
                 testId,
                 method,
                 url,
-                failure.payload,
-                failure.status,
-                failure.body,
+                failure,
                 Helper.IS_FAILURE_TEST
               )
               this.outputResult(failureResult, `"${label}" to Fail`, `${method} ${endpoint}`)

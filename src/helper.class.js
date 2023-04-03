@@ -34,6 +34,12 @@ export default class Helper {
   static IS_SUCCESS_TEST = Symbol('IS_SUCCESS_TEST')
   static DROP_TEST_DATABASE = Symbol('DROP_TEST_DATABASE')
   static DONT_DROP_TEST_DATABASE = Symbol('DONT_DROP_TEST_DATABASE')
+  static MATCH_NONE = Symbol('MATCH_NONE')
+  static MATCH_KEY = Symbol('MATCH_KEY')
+  static MATCH_VALUE = Symbol('MATCH_VALUE')
+  static MATCH_BOTH = Symbol('MATCH_BOTH')
+  static RECURSIVELY = Symbol('RECURSIVELY')
+  static NOT_RECURSIVELY = Symbol('NOT_RECURSIVELY')
 
   /**
    * Default token validity period in minutes.
@@ -475,6 +481,7 @@ export default class Helper {
    * Sets KoaRouter middleware or controller response
    *
    * @memberof Helper
+   * @async
    * @function middlewareHandler
    * @param {Object} ctx - KoaRouter controller object.
    * @param {Function} next - KoaRouter next function.
@@ -482,7 +489,7 @@ export default class Helper {
    * @param {Any} [body] - KoaRouter response body.
    * @param {Symbol} [handlerType] - set whether this function behaves like middleware or a controller.
    */
-  static middlewareHandler = (
+  static middlewareHandler = async (
     ctx = {},
     next,
     status = 200,
@@ -494,7 +501,7 @@ export default class Helper {
       ctx.body = ctx.helper.formatedResponse(body)
     }
     if (handlerType === Helper.IS_MIDDLEWARE && typeof next === 'function') {
-      next()
+      await next()
     }
   }
 
@@ -768,19 +775,23 @@ export default class Helper {
    * @function hasAllKeys
    * @param {Object} a - The left comparison object.
    * @param {Object} b - The right comparison object.
-   * @param {Boolean} [recursively] - compare keys recursively.
+   * @param {Symbol} [recursively] - compare keys recursively.
+   * @param {Symbol} [matchOn] - how to match the two data types.
    * @returns {Boolean}
    */
-  static hasAllKeys = (a, b, recursively = false, alsoMatchValues = false) => {
+  static hasAllKeys = (a, b, recursively = Helper.NOT_RECURSIVELY, matchOn = Helper.MATCH_KEY) => {
     if (!a || !b) {
       return false
+    }
+    if (matchOn === Helper.MATCH_VALUE) {
+      return a === b
     }
     if (Array.isArray(a)) {
       if (a.length !== b.length) {
         return false
       }
       const hasAllKeysFiltered = a.filter((currentA, index) =>
-        Helper.hasAllKeys(currentA, b[index], recursively, alsoMatchValues)
+        Helper.hasAllKeys(currentA, b[index], recursively, matchOn)
       )
       return hasAllKeysFiltered.length === a.length
     }
@@ -788,8 +799,8 @@ export default class Helper {
       if (!Object.keys(b).includes(key)) {
         return false
       }
-      const matchNonObject = alsoMatchValues && typeof a[key] !== 'object'
-      const matchNull = alsoMatchValues && a[key] === null
+      const matchNonObject = matchOn === Helper.MATCH_BOTH && typeof a[key] !== 'object'
+      const matchNull = matchOn === Helper.MATCH_BOTH && a[key] === null
       let bValue = b[key]
       if (typeof bValue !== typeof a[key]) {
         if (bValue instanceof Date) {
@@ -801,11 +812,33 @@ export default class Helper {
       if ((matchNonObject || matchNull) && a[key] !== bValue) {
         return false
       }
-      if (!recursively || a[key] === null || typeof a[key] !== 'object') {
+      if (recursively === Helper.NOT_RECURSIVELY || a[key] === null || typeof a[key] !== 'object') {
         return true
       }
-      return Helper.hasAllKeys(a[key], b[key], recursively, alsoMatchValues)
+      return Helper.hasAllKeys(a[key], b[key], recursively, matchOn)
     })
+  }
+
+  /**
+   * Get the match Symbol for the passed string value.
+   *
+   * @memberof Helper
+   * @function getMatchSymbol
+   * @param {String} matchName - The string name for the symbol.
+   * @returns {Symbol}
+   */
+  static getMatchSymbol = async matchName => {
+    switch (matchName) {
+      case 'value':
+        return Helper.MATCH_VALUE
+      case 'key':
+        return Helper.MATCH_KEY
+      case 'both':
+        return Helper.MATCH_BOTH
+      case 'none':
+      default:
+        return Helper.MATCH_NONE
+    }
   }
 
   /**
@@ -819,17 +852,31 @@ export default class Helper {
    * @param {Object} payload - The request headers and body.
    * @param {Number} expectedStatus - The expected http response code.
    * @param {Object} expectedBody - The expected http response body.
+   * @param {Object} expectedBody - The expected http response body.
    * @returns {Promise<Object>}
    */
-  static testRoute = async (method, url, payload, expectedStatus, expectedBody) => {
+  static testRoute = async (
+    method,
+    url,
+    payload,
+    expectedStatus,
+    expectedBody,
+    matchResponseOn = Helper.MATCH_NONE
+  ) => {
     const response = await Helper.httpClient.any(method, url, {
       data: payload.body,
       headers: payload.headers
     })
     const statusPassed = expectedStatus === response.status
     let bodyPassed = !expectedBody
-    if (expectedBody) {
-      bodyPassed = Helper.hasAllKeys(expectedBody, response.data)
+    const checkResponse = matchResponseOn !== Helper.MATCH_NONE
+    if (expectedBody && checkResponse) {
+      bodyPassed = Helper.hasAllKeys(
+        expectedBody,
+        response.data,
+        Helper.RECURSIVELY,
+        matchResponseOn
+      )
     }
     return {passed: statusPassed && bodyPassed, response}
   }
@@ -900,13 +947,19 @@ export default class Helper {
    * @param {Any} expectedOutput - The expected response from the operation.
    * @returns {Promise<Object>}
    */
-  static testDatabase = async (operation, parameters, expectedOutput) => {
+  static testDatabase = async (
+    operation,
+    parameters,
+    expectedOutput,
+    matchResponseOn = Helper.MATCH_NONE
+  ) => {
     const response = await operation(...parameters)
     const typeOfPassed = typeof response === typeof expectedOutput
-    let passed = typeOfPassed && response === expectedOutput
+    const matchResponse = matchResponseOn !== Helper.MATCH_NONE
+    let passed = typeOfPassed && (response === expectedOutput || !matchResponse)
 
-    if (typeof response === 'object') {
-      passed = Helper.hasAllKeys(expectedOutput, response, false, true)
+    if (typeof response === 'object' && matchResponse) {
+      passed = Helper.hasAllKeys(expectedOutput, response, Helper.RECURSIVELY, matchResponseOn)
     }
     return {passed, response}
   }

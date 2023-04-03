@@ -5,12 +5,13 @@
 		"middleware": "session",
 		"handler": "session",
 		"test": {
-			"004": {
+			"103": {
 				"label": "Logged In Get User",
 				"success": {
+					"match": "key",
 					"payload": {
 						"headers": {
-							"Authorization": "Bearer [$cache$003$body$data$token]"
+							"Authorization": "Bearer [$cache$102$body$data$token]"
 						}
 					},
 					"status": 200,
@@ -22,6 +23,7 @@
 					}
 				},
 				"failure": {
+					"match": "key",
 					"payload": {
 						"headers": {
 							"Authorization": "Bearer 12345"

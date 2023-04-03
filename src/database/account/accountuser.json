@@ -20,10 +20,11 @@
     "idField": "id"
   },
   "test": {
-    "001": {
+    "100": {
       "label": "Insert a user",
       "operation": "insert",
       "success": {
+        "match": "both",
         "parameters": [
           {
             "username": "testuser",
@@ -38,6 +39,7 @@
         }
       },
       "failure": {
+        "match": "both",
         "parameters": [{
           "user_name": "testuser",
           "passWord": "testpassword",
@@ -45,13 +47,14 @@
         }]
       }
     },
-    "002": {
+    "101": {
       "label": "update user",
       "operation": "updateOne",
       "success": {
+        "match": "both",
         "parameters": [
           {
-            "id": "[$cache$001$id]"
+            "id": "[$cache$100$id]"
           },
           {
             "username": "testuser",
@@ -62,9 +65,10 @@
         "response": 1
       },
       "failure": {
+        "match": "both",
         "parameters": [
           {
-            "id": "1"
+            "id": "x"
           },
           {
             "username": "testuser",
