@@ -115,7 +115,7 @@ export default (name, modelPath) => {
       timestamps = true,
       versionKey = false,
       encryptPassword = false,
-      passwordField = 'password',
+      passwordField = ['password'],
       idField = 'id',
       toJSON = {},
       toObject = {},
@@ -123,6 +123,7 @@ export default (name, modelPath) => {
     } = config.schema || {}
 
     const schema = new mongoose.Schema(modelStructure, {
+      collection: name,
       timestamps,
       versionKey,
       toJSON: virtuals ? {...toJSON, virtuals: true} : toJSON,
@@ -139,9 +140,12 @@ export default (name, modelPath) => {
       if (idField) {
         this[idField] = this._id
       }
-      if (encryptPassword) {
-        if (this.isModified(passwordField)) {
-          this[passwordField] = Helper.hash(this[passwordField])
+      if (encryptPassword && passwordField.length > 0) {
+        for (let x = 0; x < passwordField.length; x++) {
+          const field = passwordField[x]
+          if (this.isModified(field)) {
+            this[field] = Helper.hash(this[field])
+          }
         }
       }
       return next()
@@ -149,8 +153,13 @@ export default (name, modelPath) => {
 
     schema.pre('updateOne', function (next) {
       const doc = this.getUpdate()
-      if (doc[passwordField]) {
-        doc[passwordField] = Helper.hash(doc[passwordField])
+      if (encryptPassword && passwordField.length > 0) {
+        for (let x = 0; x < passwordField.length; x++) {
+          const field = passwordField[x]
+          if (doc[field]) {
+            doc[field] = Helper.hash(doc[field])
+          }
+        }
       }
       return next()
     })

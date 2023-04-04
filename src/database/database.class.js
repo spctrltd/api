@@ -12,7 +12,7 @@ export default class {
       defaultUser,
       connectionString,
       connectionOptions,
-      userDataModelsPath
+      userDataModelPath
     } = options
 
     this.defaultUser = defaultUser
@@ -20,7 +20,7 @@ export default class {
     this.memoryOnly = memoryOnly
     this.connectionString = connectionString
     this.connectionOptions = connectionOptions
-    this.userDataModelsPath = userDataModelsPath
+    this.userDataModelPath = userDataModelPath
 
     this.connection = null
     this.sequelize = null

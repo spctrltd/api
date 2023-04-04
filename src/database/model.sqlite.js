@@ -86,15 +86,15 @@ const evalDataType = data => {
  */
 const setDataType = (structure, options = {}) => {
   if (typeof structure === 'object') {
-    const {encryptPassword = false, passwordField = 'password', idField = 'id'} = options
+    const {encryptPassword = false, passwordField = ['password'], idField = 'id'} = options
 
     return Object.keys(structure).reduce((acc, key) => {
       let dataType = evalDataType(structure[key])
-      if (encryptPassword && key === passwordField) {
+      if (encryptPassword && passwordField.includes(key)) {
         dataType = {
           ...dataType,
           set(value) {
-            this.setDataValue(passwordField, Helper.hash(value))
+            this.setDataValue(key, Helper.hash(value))
           }
         }
       }

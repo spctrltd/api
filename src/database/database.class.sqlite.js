@@ -40,7 +40,7 @@ export default class extends Database {
 
     const {fields, tests, virtuals} = await schemaLoader(
       Helper.DATABASE_TYPE_SQLITE,
-      this.userDataModelsPath,
+      this.userDataModelPath,
       this.sequelize
     )
     await this.sequelize.sync()
@@ -309,7 +309,7 @@ export default class extends Database {
     if (!this.hasOptions(options)) {
       return {}
     }
-    const {populate} = options
+    const {populate, skip, limit /* , sort, select */} = options
     const virtuals = this.virtuals[modelName]
     const selectOptions = {}
     if (Array.isArray(populate) && populate.length > 0) {
@@ -321,6 +321,18 @@ export default class extends Database {
       })
       selectOptions.include = populateQuery
     }
+    if (skip) {
+      selectOptions.offset = skip
+    }
+    if (limit) {
+      selectOptions.limit = limit
+    }
+    // if (sort) {
+    //   selectOptions.order = sort
+    // }
+    // if (select) {
+    //   selectOptions.include = select
+    // }
     return selectOptions
   }
 }

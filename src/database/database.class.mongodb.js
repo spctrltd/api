@@ -20,7 +20,7 @@ export default class extends Database {
   init = async () => {
     const {models, fields, tests} = await schemaLoader(
       Helper.DATABASE_TYPE_MONGODB,
-      this.userDataModelsPath
+      this.userDataModelPath
     )
     this.models = models
     this.fields = fields
@@ -97,12 +97,11 @@ export default class extends Database {
    * @returns {Promise<Object>}
    */
   findOne = async (model, where, options = {}) => {
-    const {populate} = options
     try {
       let response
       if (this.hasOptions(options)) {
         response = this.models[model].findOne(where)
-        response = this.populate(response, populate)
+        response = this.setSelectOptions(response, options)
         response = await response.exec()
       } else {
         response = await this.models[model].findOne(where)
@@ -126,12 +125,11 @@ export default class extends Database {
    * @returns {Promise<Object>}
    */
   findById = async (model, id, options = {}) => {
-    const {populate} = options
     try {
       let response
       if (this.hasOptions(options)) {
         response = this.models[model].findById(id)
-        response = this.populate(response, populate)
+        response = this.setSelectOptions(response, options)
         response = await response.exec()
       } else {
         response = await this.models[model].findById(id)
@@ -154,12 +152,11 @@ export default class extends Database {
    * @returns {Promise<Array>}
    */
   find = async (model, where, options = {}) => {
-    const {populate} = options
     try {
       let response
       if (this.hasOptions(options)) {
         response = this.models[model].find(where)
-        response = this.populate(response, populate)
+        response = this.setSelectOptions(response, options)
         response = await response.exec()
       } else {
         response = await this.models[model].find(where)
@@ -282,18 +279,31 @@ export default class extends Database {
    * Populate a virtual or ref field.
    *
    * @memberof MongoDatabase
-   * @function populate
+   * @function setSelectOptions
    * @param {Query} query - The query to run the operation on.
-   * @param {Array|undefined} populate - An array of fields to populate.
+   * @param {Object} options - An object with querying options.
    * @returns {Query}
    */
-  populate = (query, populate) => {
+  setSelectOptions = (query, options) => {
+    const {populate, skip, limit, sort, select} = options
+    let optionsQuery = query
     if (Array.isArray(populate) && populate.length > 0) {
-      let populateQuery = query
       for (let x = 0; x < populate.length; x++) {
-        populateQuery = populateQuery.populate(populate[x])
+        optionsQuery = optionsQuery.populate(populate[x])
       }
     }
-    return query
+    if (skip) {
+      optionsQuery.skip(skip)
+    }
+    if (limit) {
+      optionsQuery.limit(limit)
+    }
+    if (sort) {
+      optionsQuery.sort(sort)
+    }
+    if (select) {
+      optionsQuery.select(select)
+    }
+    return optionsQuery
   }
 }

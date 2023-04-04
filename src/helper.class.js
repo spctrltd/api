@@ -532,7 +532,7 @@ export default class Helper {
       },
       connectionString: undefined, // MongoDB Only
       connectionOptions: {autoIndex: false}, // MongoDB Only
-      userDataModelsPath: undefined // Absolute path to user-defined models
+      userDataModelPath: undefined // Absolute path to user-defined models
     },
     server: {
       sessionKey: Helper.defaultKey, // server token encryption hash

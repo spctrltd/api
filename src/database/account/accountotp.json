@@ -8,7 +8,7 @@
   "schema": {
     "encryptPassword": true,
     "idField": "id",
-    "passwordField": "otp",
+    "passwordField": ["otp"],
     "virtuals": {
       "user": {
         "localField": "userId",

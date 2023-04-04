@@ -14,21 +14,21 @@ import Helper from '../helper.class.js'
  * @function
  * @async
  * @param {Symbol} databaseType - The database type.
- * @param {String} userDataModelsPath - Absolute path to user-defined models.
+ * @param {String} userDataModelPath - Absolute path to user-defined models.
  * @param {Sequelize|undefined} sequelize - If for SQL database, requires Sequelize.
  * @returns {Promise<Object>}
  */
-export default async (databaseType, userDataModelsPath, sequelize) => {
+export default async (databaseType, userDataModelPath, sequelize) => {
   const dataModels = {}
   const modelFields = {}
   const modelTests = {}
   const modelVirtuals = {}
   const dataModelsPath = Helper.getAbsolutePath('./database/account')
   let fileList = Helper.createFileList(dataModelsPath, ['.json'], Helper.FILE_NAME_AS_KEY)
-  const doesExist = await Helper.directoryExists(userDataModelsPath)
+  const doesExist = await Helper.directoryExists(userDataModelPath)
   if (doesExist) {
     fileList = Helper.createFileList(
-      userDataModelsPath,
+      userDataModelPath,
       ['.json'],
       Helper.FILE_NAME_AS_KEY,
       fileList
