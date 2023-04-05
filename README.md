@@ -33,7 +33,7 @@ const sqliteConfig = {
   },
   test: {
     shutdown: true,
-	  dropDatabase: true
+    dropDatabase: true
   }
 }
 

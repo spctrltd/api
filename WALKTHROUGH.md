@@ -400,32 +400,32 @@ This directory should have sub-directories: `config`, `handler` and `middleware`
 The `config` directory should contain one or more JSON files with the route definitions as an array of routes:
 ```JSON
 [
-	{
-		"method": "GET",
-		"path": "/session/articles",
-		"middleware": "checkAuth",
-		"handler": "article",
-		"test": {
-			"200": {
-				"label": "Get all articles for logged in user",
-				"success": {
-					"match": "key",
-					"payload": {
-						"headers": {
-							"Authorization": "Bearer [$cache$102$body$data$token]"
-						}
-					},
-					"status": 200,
-					"body": {
-						"tag": true,
-						"data": {
-							"articles": true
-						}
-					}
-				}
-			}
-		}
-	}
+  {
+    "method": "GET",
+    "path": "/session/articles",
+    "middleware": "checkAuth",
+    "handler": "article",
+    "test": {
+      "200": {
+        "label": "Get all articles for logged in user",
+        "success": {
+          "match": "key",
+          "payload": {
+            "headers": {
+              "Authorization": "Bearer [$cache$102$body$data$token]"
+            }
+          },
+          "status": 200,
+          "body": {
+            "tag": true,
+            "data": {
+              "articles": true
+            }
+          }
+        }
+      }
+    }
+  }
 ]
 ```
 API uses KoaJS under the hood as a server.
