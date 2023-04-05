@@ -36,8 +36,10 @@ jobs:
       run: |
         git checkout gh-pages
         mv -f ./documentation/* ./
+        rm -rf documentation
         git config --local user.email "pages-update@spctr.ltd"
         git config --local user.name "github-actions[bot]"
+        git add .
         git commit -a -m "pages update"
 
     - name: Force push to destination branch
