@@ -32,10 +32,17 @@ jobs:
     - run: npm install
     - run: npm run doc
 
+    - name: Create local changes
+      run: |
+        git checkout gh-pages
+        mv -f ./documentation/* ./
+        git config --local user.email "pages-update@spctr.ltd"
+        git config --local user.name "github-actions[bot]"
+        git commit -a -m "pages update"
+
     - name: Force push to destination branch
       uses: ad-m/github-push-action@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         branch: gh-pages
         force: true
-        directory: ./documentation
