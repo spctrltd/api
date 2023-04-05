@@ -244,9 +244,7 @@ export default class extends Database {
   upsert = async (model, where, data) => {
     try {
       await this.models[model].updateOne(where, data, {upsert: true})
-      const response = await this.findOne(model, where)
-      const {_doc = null} = response || {}
-      return _doc
+      return await this.findOne(model, where)
     } catch (error) {
       Helper.developerPrinter(error)
       return undefined
