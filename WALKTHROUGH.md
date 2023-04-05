@@ -20,7 +20,7 @@ updateOne(where, data) = Number
 update(where, data) = Number
 upsert(where, data) = {}
 ```
-Parameters and return values are documented in the wiki, but the jist is:
+Parameters and return values are documented in [here](https://spctrltd.github.io/api/), but the jist is:
 ```JS
 where = {}
 /*

@@ -1,10 +1,12 @@
-# Install
+# S P C T R . L T D . API
+
+## Install
 ```
 # nodejs >= 18
 npm install @spctrltd/api
 ```
 
-## Usage
+## Quick Start
 ```JS
 import Api from '@spctrltd/api'
 const api = new Api()
@@ -22,7 +24,8 @@ const mongoDBConfig = {
     connectionString: 'mongodb://localhost:27017/spctr-api-unit-test'
   },
   test: {
-    shutdown: true
+    shutdown: true,
+    dropDatabase: true
   }
 }
 
@@ -88,3 +91,5 @@ test.start()
   }
 }
 ```
+## Guide
+[Walkthrough](./WALKTHROUGH.md)
