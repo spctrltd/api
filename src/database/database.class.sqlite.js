@@ -41,6 +41,7 @@ export default class extends Database {
     const {fields, tests, virtuals} = await schemaLoader(
       Helper.DATABASE_TYPE_SQLITE,
       this.userDataModelPath,
+      this.initialiseUserAccount,
       this.sequelize
     )
     await this.sequelize.sync()

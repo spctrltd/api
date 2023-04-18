@@ -20,7 +20,8 @@ export default class extends Database {
   init = async () => {
     const {models, fields, tests} = await schemaLoader(
       Helper.DATABASE_TYPE_MONGODB,
-      this.userDataModelPath
+      this.userDataModelPath,
+      this.initialiseUserAccount
     )
     this.models = models
     this.fields = fields

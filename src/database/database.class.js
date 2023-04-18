@@ -12,7 +12,8 @@ export default class {
       defaultUser,
       connectionString,
       connectionOptions,
-      userDataModelPath
+      userDataModelPath,
+      initialiseUserAccount
     } = options
 
     this.defaultUser = defaultUser
@@ -21,6 +22,7 @@ export default class {
     this.connectionString = connectionString
     this.connectionOptions = connectionOptions
     this.userDataModelPath = userDataModelPath
+    this.initialiseUserAccount = initialiseUserAccount
 
     this.connection = null
     this.sequelize = null
@@ -39,17 +41,19 @@ export default class {
    * @function initAccount
    */
   initAccount = async () => {
-    const {
-      username: defaultUserUsername = this.defaultUser.username,
-      password: defaultUserPassword = this.defaultUser.password
-    } = this.defaultUser
+    if (this.initialiseUserAccount) {
+      const {
+        username: defaultUserUsername = this.defaultUser.username,
+        password: defaultUserPassword = this.defaultUser.password
+      } = this.defaultUser
 
-    const result = await this.findOne('accountuser', {username: defaultUserUsername})
-    if (result === null) {
-      await this.insert('accountuser', {
-        username: defaultUserUsername,
-        password: defaultUserPassword
-      })
+      const result = await this.findOne('accountuser', {username: defaultUserUsername})
+      if (result === null) {
+        await this.insert('accountuser', {
+          username: defaultUserUsername,
+          password: defaultUserPassword
+        })
+      }
     }
   }
 

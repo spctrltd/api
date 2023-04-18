@@ -1,4 +1,2 @@
-import Api from './src/api.class.js'
-import test from './src/test.class.js'
-export default Api
-export const Test = test
+export {default} from './src/api.class.js'
+export {default as Test} from './src/test.class.js'

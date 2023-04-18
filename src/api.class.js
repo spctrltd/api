@@ -163,13 +163,14 @@ export default class {
     const {developerPrinter} = this.config.system
 
     const {cert: httpsConfigCert} = httpsConfig
+    let server = 'http'
     if (httpsConfigCert) {
-      developerPrinter({httpStarted: true})
+      server = 'https'
       https.createServer(httpsConfig, this.server.callback()).listen(port)
     } else {
-      developerPrinter({httpStarted: true})
       this.server.listen(port)
     }
+    developerPrinter({server, port, startedAt: new Date()})
     return {
       DBO: this.server.context.DBO,
       test: this.server.context.test,
