@@ -3,7 +3,7 @@
  *
  * @module authentication
  */
-import passport from 'koa-passport'
+import koaPassport from 'koa-passport'
 import {ExtractJwt as extractJwt, Strategy as JwtStrategy} from 'passport-jwt'
 import {Strategy as LocalStrategy} from 'passport-local'
 import moment from 'moment'
@@ -43,15 +43,15 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
     })
   }
 
-  passport.serializeUser((user, done) => {
+  koaPassport.serializeUser((user, done) => {
     done(null, user.id)
   })
 
-  passport.deserializeUser(async (id, done) => {
+  koaPassport.deserializeUser(async (id, done) => {
     done(null, id)
   })
 
-  passport.use(
+  koaPassport.use(
     'sessionStart',
     new LocalStrategy(
       {
@@ -82,7 +82,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
     )
   )
 
-  passport.use(
+  koaPassport.use(
     'sessionValidation',
     new JwtStrategy(
       {
@@ -103,7 +103,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
     )
   )
 
-  passport.use(
+  koaPassport.use(
     'sessionRefresh',
     new JwtStrategy(
       {
@@ -137,7 +137,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
   const verify = ctx => {
     return new Promise(resolve => {
       const returnValue = {...responseTemplate}
-      passport.authenticate('sessionValidation', (err, user) => {
+      koaPassport.authenticate('sessionValidation', (err, user) => {
         if (err || !user) {
           returnValue.status = 401
         } else {
@@ -159,7 +159,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
   const refresh = ctx => {
     return new Promise(resolve => {
       const returnValue = {...responseTemplate}
-      passport.authenticate('sessionRefresh', (err, token) => {
+      koaPassport.authenticate('sessionRefresh', (err, token) => {
         if (err || !token) {
           returnValue.status = 401
         } else {
@@ -183,7 +183,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
    */
   const isAuthenticated = ctx => {
     return new Promise(resolve => {
-      passport.authenticate('sessionValidation', (err, authed) => {
+      koaPassport.authenticate('sessionValidation', (err, authed) => {
         if (err || !authed) {
           resolve(false)
         } else {
@@ -202,7 +202,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
    */
   const getAuthenticatedUser = ctx => {
     return new Promise(resolve => {
-      passport.authenticate('sessionValidation', (err, authed, user) => {
+      koaPassport.authenticate('sessionValidation', (err, authed, user) => {
         if (err || !authed) {
           resolve(null)
         } else {
@@ -274,7 +274,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
   }
 
   return {
-    passport,
+    passport: koaPassport,
     verify,
     refresh,
     isAuthenticated,
