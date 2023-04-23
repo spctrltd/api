@@ -116,7 +116,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
           helper: {generateToken, sessionKey}
         } = req.ctx
         const {refreshToken} = generateToken(
-          {id: jwtPayload.user.id},
+          {user: {id: jwtPayload.user.id}},
           sessionKey,
           jwtExpiresInMinutes,
           jwtRefreshExpiresInMinutes
@@ -251,7 +251,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
             }
           } else {
             const {token, expiresAfter, refreshToken} = generateToken(
-              {id: user.id},
+              {user: {id: user.id}},
               sessionKey,
               jwtExpiresInMinutes,
               jwtRefreshExpiresInMinutes

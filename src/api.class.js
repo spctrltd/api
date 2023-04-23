@@ -27,6 +27,7 @@ export default class {
     this.config = Helper.setConfig(config)
     this.isConfigured = false
     this.server.context.test = {routes: {}, database: {}}
+    this.server.context.configuration = this.config
   }
 
   /**

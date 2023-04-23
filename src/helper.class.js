@@ -155,19 +155,18 @@ export default class Helper {
    *
    * @memberof Helper
    * @function generateToken
-   * @param {Object} user - a user object with at at least an id property.
-   * @param {String} secret - the key used to encrypt the user.
+   * @param {Object} payload - a object to encrypt.
+   * @param {String} secret - the key used to encrypt the payload.
    * @param {Number} [expireToken] - token validity period in minutes.
    * @param {Number} [expireRefresh] - refresh token validity period in minutes.
    * @returns {Object}
    */
   static generateToken = (
-    user,
+    payload,
     secret,
     expireToken = Helper.defaultExpireToken,
     expireRefresh = Helper.defaultExpireRefresh
   ) => {
-    const payload = {user}
     const expiresAfter = moment().add(expireToken, 'minutes')
     const expiresIn = parseInt((expiresAfter - moment()) / 1000)
     const token = jsonwebtoken.sign(payload, secret, {expiresIn})
@@ -179,6 +178,23 @@ export default class Helper {
     })
 
     return {token, expiresAfter, refreshToken, refreshTokenExpiresAfter}
+  }
+
+  /**
+   * verify JWT
+   *
+   * @memberof Helper
+   * @function verifyToken
+   * @param {Object} token - the JWT to verify.
+   * @param {String} secret - the key used to decrypt the JWT data.
+   * @returns {Object}
+   */
+  static verifyToken = (token, secret) => {
+    try {
+      return jsonwebtoken.verify(token, secret)
+    } catch (err) {
+      return null
+    }
   }
 
   /**
