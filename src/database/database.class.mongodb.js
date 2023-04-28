@@ -146,6 +146,7 @@ export default class extends Database {
    * Find one or more documents.
    *
    * @memberof MongoDatabase
+   * @async
    * @function find
    * @param {String} model - Name of the database model.
    * @param {Object} where - An object that specifies filter parameters.

@@ -57,7 +57,13 @@ test.start()
     },
     connectionString: undefined, // MongoDB Only
     connectionOptions: {autoIndex: false}, // MongoDB Only
-    userDataModelPath: undefined // Absolute path to user-defined models
+    userDataModelPath: undefined, // Absolute path to user-defined models
+    initialiseUserAccount: false
+    /*
+    create default database data for user authentication. If true, this will create
+    default user (at defaultUser property) and otp database tables/collections 
+    for use with the default authentication routes
+    */
   },
   server: {
     sessionKey: Helper.defaultKey, // server token encryption hash

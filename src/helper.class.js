@@ -192,7 +192,8 @@ export default class Helper {
   static verifyToken = (token, secret) => {
     try {
       return jsonwebtoken.verify(token, secret)
-    } catch (err) {
+    } catch (error) {
+      Helper.errorPrinter(`verifyToken: ${error}`)
       return null
     }
   }
@@ -209,7 +210,7 @@ export default class Helper {
     try {
       mkdirSync(path, {recursive: true})
     } catch (error) {
-      console.error(`mkdir: ${error}`)
+      Helper.errorPrinter(`mkdir: ${error}`)
     }
   }
 
@@ -225,8 +226,8 @@ export default class Helper {
     try {
       const json = readFileSync(path, 'utf8')
       return JSON.parse(json)
-    } catch (err) {
-      console.log('[readJsonFile]', err)
+    } catch (error) {
+      Helper.errorPrinter(`readJsonFile: ${error}`)
       return {}
     }
   }
@@ -310,7 +311,24 @@ export default class Helper {
    * @param {String} data - warning message.
    */
   static warningPrinter = data => {
-    console.info('\x1b[43m%s\x1b[0m', 'WARNING', data)
+    const {NODE_ENV = 'development', PRINT_WARNINGS = false} = process.env
+    if (NODE_ENV === 'development' || PRINT_WARNINGS) {
+      console.info('\x1b[43m%s\x1b[0m', 'WARNING', data)
+    }
+  }
+
+  /**
+   * Internal stdout error printer
+   *
+   * @memberof Helper
+   * @function errorPrinter
+   * @param {String} data - error message.
+   */
+  static errorPrinter = data => {
+    const {NODE_ENV = 'development', PRINT_ERRORS = false} = process.env
+    if (NODE_ENV === 'development' || PRINT_ERRORS) {
+      console.info('\x1b[41m%s\x1b[0m', 'ERROR', data)
+    }
   }
 
   /**
@@ -453,6 +471,63 @@ export default class Helper {
   }
 
   /**
+   * Populate a key or value within an object
+   *
+   * @memberof Helper
+   * @function populateObject
+   * @param {Object} object - the object.
+   * @param {Function} defaults - a template of the object with default values.
+   * @returns {Object}
+   */
+  static populateObject = (object, defaults) => {
+    if (object !== null && object !== undefined) {
+      if (Array.isArray(object)) {
+        return object.map(value => Helper.populateObject(value, defaults[0]))
+      }
+      if (typeof object === 'object') {
+        return Object.keys(object).reduce((builtObject, key) => {
+          let value = object[key]
+          if (typeof object[key] === 'object') {
+            value = Helper.populateObject(object[key], defaults[key])
+          }
+          if (Helper.isEmpty(value)) {
+            return builtObject
+          }
+          return {
+            ...builtObject,
+            [key]: value
+          }
+        }, defaults)
+      }
+    }
+    return object
+  }
+
+  /**
+   * Check if value is empty
+   *
+   * @memberof Helper
+   * @function isEmpty
+   * @param {any} element - The value to test.
+   * @returns {boolean}
+   */
+  isEmpty = element => {
+    if (typeof element === 'string') {
+      return element.trim().length === 0
+    }
+    if (Array.isArray(element)) {
+      return element.length === 0
+    }
+    if (typeof element === 'object' && element !== null) {
+      return Object.keys(element).length === 0
+    }
+    if (element === null || element === undefined) {
+      return true
+    }
+    return false
+  }
+
+  /**
    * Format a database query condition object for safe usage if required.
    *
    * @memberof Helper
@@ -552,7 +627,8 @@ export default class Helper {
       initialiseUserAccount: false
       /*
       create default database data for user authentication. If true, this will create
-      default user and otp database tables/collections for use with the default authentication routes
+      default user (at defaultUser property) and otp database tables/collections 
+      for use with the default authentication routes
       */
     },
     server: {
@@ -721,15 +797,15 @@ export default class Helper {
      * @param {Object} inputData - The POST payload.
      * @returns {Promise<Object>}
      */
-    post: (url, options, inputData) => {
+    post: (url, options, inputData, instance) => {
       return new Promise(resolve => {
-        axios
+        ;(instance || axios)
           .post(url, inputData, options)
           .then(({data}) => {
             resolve(data)
           })
           .catch(err => {
-            console.error(err)
+            Helper.errorPrinter(err)
             resolve(null)
           })
       })
@@ -745,15 +821,15 @@ export default class Helper {
      * @param {Object} options - An Axios options object.
      * @returns {Promise<Object>}
      */
-    get: (url, options) => {
+    get: (url, options, instance) => {
       return new Promise(resolve => {
-        axios
+        ;(instance || axios)
           .get(url, options)
           .then(({data}) => {
             resolve(data)
           })
           .catch(err => {
-            console.error(err)
+            Helper.errorPrinter(err)
             resolve(null)
           })
       })
@@ -783,6 +859,7 @@ export default class Helper {
           .catch((error = {}) => {
             const {response = {}} = error
             const {status, data} = response
+            Helper.errorPrinter(response)
             resolve({status, data})
           })
       })
