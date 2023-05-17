@@ -511,7 +511,7 @@ export default class Helper {
    * @param {any} element - The value to test.
    * @returns {boolean}
    */
-  isEmpty = element => {
+  static isEmpty = element => {
     if (typeof element === 'string') {
       return element.trim().length === 0
     }
