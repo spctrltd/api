@@ -445,21 +445,36 @@ export default class Helper {
    * @param {Object} object - the object.
    * @param {Function} replacerFunction - the function used to replace the key or value.
    * @param {Symbol} [replaceWhat] - the symbol specifying key or value.
+   * @param {Boolean} [replaceObjects] - whether to replace object type as well.
    * @returns {Object}
    */
-  static replaceInObject = (object, replacerFunction, replaceWhat = Helper.REPLACE_KEY) => {
+  static replaceInObject = (
+    object,
+    replacerFunction,
+    replaceWhat = Helper.REPLACE_KEY,
+    replaceObjects = false
+  ) => {
     if (object !== null && object !== undefined) {
       if (Array.isArray(object)) {
-        return object.map(value => Helper.replaceInObject(value, replacerFunction, replaceWhat))
+        return object.map(value =>
+          Helper.replaceInObject(value, replacerFunction, replaceWhat, replaceObjects)
+        )
       }
       if (typeof object === 'object' && Object.keys(object).length > 0) {
         return Object.keys(object).reduce((builtObject, key) => {
           let value = object[key]
-          if (typeof object[key] === 'object') {
-            value = Helper.replaceInObject(object[key], replacerFunction, replaceWhat)
+          if (replaceObjects) {
+            value = replacerFunction(key, value)
           }
-          const newKey = replaceWhat === Helper.REPLACE_KEY ? replacerFunction(key) : key
-          const newValue = replaceWhat === Helper.REPLACE_VALUE ? replacerFunction(value) : value
+          if (typeof value === 'object') {
+            value = Helper.replaceInObject(value, replacerFunction, replaceWhat, replaceObjects)
+          }
+          const newKey =
+            !replaceObjects && replaceWhat === Helper.REPLACE_KEY ? replacerFunction(key) : key
+          const newValue =
+            !replaceObjects && replaceWhat === Helper.REPLACE_VALUE
+              ? replacerFunction(value)
+              : value
           return {
             ...builtObject,
             [newKey]: newValue
@@ -476,7 +491,7 @@ export default class Helper {
    * @memberof Helper
    * @function populateObject
    * @param {Object} object - the object.
-   * @param {Function} defaults - a template of the object with default values.
+   * @param {Object} [defaults] - a template of the object with default values.
    * @returns {Object}
    */
   static populateObject = (object, defaults) => {
@@ -487,10 +502,9 @@ export default class Helper {
       if (typeof object === 'object') {
         return Object.keys(object).reduce((builtObject, key) => {
           let value = object[key]
-          if (typeof object[key] === 'object') {
-            value = Helper.populateObject(object[key], defaults[key])
-          }
-          if (Helper.isEmpty(value)) {
+          if (typeof value === 'object' && value !== [] && value !== {}) {
+            value = Helper.populateObject(value, defaults[key])
+          } else if (Helper.isEmpty(value)) {
             return builtObject
           }
           return {
