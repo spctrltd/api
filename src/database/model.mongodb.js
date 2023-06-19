@@ -102,13 +102,13 @@ const setDataType = structure => {
  * @param {String} modelPath - Absolute path to the model config file.
  * @returns {Object}
  */
-export default (name, modelPath) => {
+export default (name, modelPath, connection) => {
   const config = Helper.readJsonFile(modelPath)
 
   if (config.model) {
-    const models = mongoose.modelNames()
+    const models = (connection || mongoose).modelNames()
     if (models.includes(name)) {
-      return {model: mongoose.model(name)}
+      return {model: (connection || mongoose).model(name)}
     }
     const modelStructure = setDataType(config.model)
     const {
@@ -165,7 +165,7 @@ export default (name, modelPath) => {
     })
 
     return {
-      model: mongoose.model(name, schema),
+      model: (connection || mongoose).model(name, schema),
       fields: Object.keys(config.model),
       test: config.test,
       virtuals

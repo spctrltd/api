@@ -13,7 +13,8 @@ export default class {
       connectionString,
       connectionOptions,
       userDataModelPath,
-      initialiseUserAccount
+      initialiseUserAccount,
+      addConnection
     } = options
 
     this.defaultUser = defaultUser
@@ -24,6 +25,7 @@ export default class {
     this.userDataModelPath = userDataModelPath
     this.initialiseUserAccount = initialiseUserAccount
 
+    this.addConnection = addConnection
     this.connection = null
     this.sequelize = null
     this.models = null

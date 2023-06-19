@@ -18,15 +18,24 @@ export default class extends Database {
    * @function init
    */
   init = async () => {
+    if (this.addConnection === true) {
+      this.connection = await mongoose
+        .createConnection(this.connectionString, this.connectionOptions)
+        .asPromise()
+    }
     const {models, fields, tests} = await schemaLoader(
       Helper.DATABASE_TYPE_MONGODB,
       this.userDataModelPath,
-      this.initialiseUserAccount
+      this.initialiseUserAccount,
+      undefined,
+      this.connection
     )
     this.models = models
     this.fields = fields
     this.tests = tests
-    await mongoose.connect(this.connectionString, this.connectionOptions)
+    if (this.addConnection === false) {
+      await mongoose.connect(this.connectionString, this.connectionOptions)
+    }
     await this.initAccount()
     this.defineModels()
   }
@@ -52,7 +61,7 @@ export default class extends Database {
    * @function disconnect
    */
   disconnect = async () => {
-    await mongoose.disconnect()
+    await (this.connection || mongoose).disconnect()
   }
 
   /**
@@ -63,7 +72,7 @@ export default class extends Database {
    * @function dropDatabase
    */
   dropDatabase = async () => {
-    await mongoose.connection.dropDatabase()
+    await (this.connection || mongoose).connection.dropDatabase()
   }
 
   /**

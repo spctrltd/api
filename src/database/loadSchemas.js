@@ -17,9 +17,16 @@ import Helper from '../helper.class.js'
  * @param {String} userDataModelPath - Absolute path to user-defined models.
  * @param {Boolean} initialiseUserAccount - Whether to create the authentication data.
  * @param {Sequelize|undefined} sequelize - If for SQL database, requires Sequelize.
+ * @param {connection|undefined} connection - seperate database connection.
  * @returns {Promise<Object>}
  */
-export default async (databaseType, userDataModelPath, initialiseUserAccount, sequelize) => {
+export default async (
+  databaseType,
+  userDataModelPath,
+  initialiseUserAccount,
+  sequelize,
+  connection
+) => {
   const dataModels = {}
   const modelFields = {}
   const modelTests = {}
@@ -51,7 +58,7 @@ export default async (databaseType, userDataModelPath, initialiseUserAccount, se
     const {model, fields, test, virtuals} = await modelGenerator[databaseType](
       name,
       fileList[name],
-      sequelize
+      sequelize || connection
     )
     dataModels[name] = model
     modelFields[name] = fields
