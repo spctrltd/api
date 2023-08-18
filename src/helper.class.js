@@ -1,6 +1,6 @@
 import {stat, mkdirSync, readFileSync, readdirSync, readSync, openSync, closeSync, rmSync} from 'fs'
 import https from 'https'
-import axios from 'axios'
+import http from 'http'
 import moment from 'moment'
 import jsonwebtoken from 'jsonwebtoken'
 import {fileURLToPath} from 'url'
@@ -806,83 +806,140 @@ export default class Helper {
    */
   static httpClient = {
     /**
-     * POST method http client.
+     * [action] represents the http method/verb client.
      *
      * @memberof httpClient
      * @async
      * @function post
-     * @param {String} url - An absolute url.
-     * @param {Object} options - An Axios options object.
-     * @param {Object} inputData - The POST payload.
+     * @param {String} [method] - Provide the http method if using 'any'.
+     * @param {String} [url] - An absolute url.
+     * @param {String} [payload] - The request body.
+     * @param {Object} [options] - nodejs http|https request options object.
      * @returns {Promise<Object>}
      */
-    post: (url, options, inputData, instance) => {
-      return new Promise(resolve => {
-        ;(instance || axios)
-          .post(url, inputData, options)
-          .then(({data}) => {
-            resolve(data)
+    get [action]() {
+      return (...params) => {        
+        return new Promise(resolve => {
+          let url, payload, options
+          if (params.length === 0 || action.toLowerCase() === 'any' && params.length < 2) {
+            Helper.errorPrinter('No Parameters passed or Too few parameters passed to Any')
+            resolve(null)
+            return
+          }
+
+          const [param1, param2, param3] = params
+
+          let method
+          if (action.toLowerCase() === 'any') {
+            method = param1
+            url = typeof param2 === 'string' || param3 !== undefined ? param2 : url
+            options = typeof param2 === 'object' && !param3 ? param2 : param3
+          } else {
+            method = action
+            url = typeof param1 === 'string' ? param1 : undefined
+            payload = typeof param2 === 'string' ? param2 : undefined
+            options = typeof param1 === 'object' ? param1 : typeof param2 === 'object' ? param2 : param3
+          }
+          httpRequest({
+            ...options,
+            url,
+            payload,
+            method: typeof method === 'string' ? method.toUpperCase() : undefined
+          })
+          .then(data => {
+            const str = data.toString()
+            try {
+              const json = JSON.parse(str)
+              resolve(json)
+            } catch (error) {
+              Helper.errorPrinter(err)
+              resolve(str)
+            }
           })
           .catch(err => {
             Helper.errorPrinter(err)
             resolve(null)
           })
-      })
-    },
-
-    /**
-     * GET method http client.
-     *
-     * @memberof httpClient
-     * @async
-     * @function post
-     * @param {String} url - An absolute url.
-     * @param {Object} options - An Axios options object.
-     * @returns {Promise<Object>}
-     */
-    get: (url, options, instance) => {
-      return new Promise(resolve => {
-        ;(instance || axios)
-          .get(url, options)
-          .then(({data}) => {
-            resolve(data)
-          })
-          .catch(err => {
-            Helper.errorPrinter(err)
-            resolve(null)
-          })
-      })
-    },
-
-    /**
-     * ANY method http client.
-     *
-     * @memberof httpClient
-     * @async
-     * @function any
-     * @param {String} method - The request method eg. POST, GET, etc.
-     * @param {String} url - An absolute url.
-     * @param {Object} [options] - An Axios options object.
-     * @returns {Promise<Object>}
-     */
-    any: (method, url, options) => {
-      return new Promise(resolve => {
-        axios({
-          method,
-          url,
-          ...options
         })
-          .then(({status, data}) => {
-            resolve({status, data})
-          })
-          .catch((error = {}) => {
-            const {response = {}} = error
-            const {status, data} = response
-            Helper.errorPrinter(response)
-            resolve({status, data})
-          })
-      })
+      }
     }
+  }
+
+  /**
+   * http request.
+   *
+   * @memberof Helper
+   * @async
+   * @function httpRequest
+   * @param {Object} [options] - Request options
+   * @returns {Promise<Buffer>}
+   */
+  static httpRequest = (options = {}) => {
+    return new Promise(resolve => {
+      const {
+        method: methodName,
+        hostname: hostName,
+        path: pathName,
+        url,
+        protocol: protocolName = 'http',
+        payload = undefined,
+        ...remainingOptions
+      } = options
+      if (typeof methodName !== 'string' || methodName.length < 3) {
+        Helper.errorPrinter('')
+        resolve(Buffer.from(''))
+        return
+      }
+
+      let requestFunction = protocolName === 'http' ? http : https
+      let path = pathName
+      let hostname = hostName
+      if (typeof url === 'string' && url.length > 0) {
+        const protocolRegex = /^(http|https)(:\/\/)/i
+        const protocolMatch = url.match(protocolRegex)
+        if (protocolMatch !== null) {
+          const [_fullMatch, _scheme, protocolString, _colon, hostString, delimeter, pathString] =
+          protocolMatch
+          requestFunction = protocolString === 'http' ? http : https
+          path = `${delimeter === '/' ? '' : '/'}${delimeter}${pathString}`
+          hostname = hostString
+        }
+      }
+
+      const method = methodName.toUpperCase()
+
+      const req = requestFunction.request({
+        method,
+        hostname,
+        path,
+        ...remainingOptions
+      }, res => {
+        let chunks = []
+
+        res.on('data', chunk => {
+          chunks = [...chunks, chunk]
+        })
+
+        res.on('end', () => {
+          const body = Buffer.concat(chunks)
+          resolve(body)
+        })
+
+        res.on('error', error => {
+          Helper.errorPrinter(error)
+          resolve(Buffer.from(''))
+        })
+      })
+
+      if (
+        typeof payload === 'string' &&
+        payload.length > 0 &&
+        (method === 'POST' || method === 'PUT' || method === 'PATCH')
+      ) {
+        req.write(payload)
+      }
+      req.end()
+    })
   }
 
   /**
