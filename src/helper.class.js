@@ -798,6 +798,13 @@ export default class Helper {
 
   /**
    * An http client.
+   * 
+   * Params should be in the following order:
+   * url, payload, options
+   * unless http method is 'any', then: method, url, payload, options
+   * 
+   * url is only optional without payload
+   * payload and options is always optional
    *
    * @name httpClient
    * @memberof Helper
@@ -805,64 +812,83 @@ export default class Helper {
    * @const
    */
   static httpClient = {
-    /**
-     * [action] represents the http method/verb client.
-     *
-     * @memberof httpClient
-     * @async
-     * @function post
-     * @param {String} [method] - Provide the http method if using 'any'.
-     * @param {String} [url] - An absolute url.
-     * @param {String} [payload] - The request body.
-     * @param {Object} [options] - nodejs http|https request options object.
-     * @returns {Promise<Object>}
-     */
-    get [action]() {
-      return (...params) => {        
-        return new Promise(resolve => {
-          let url, payload, options
-          if (params.length === 0 || action.toLowerCase() === 'any' && params.length < 2) {
-            Helper.errorPrinter('No Parameters passed or Too few parameters passed to Any')
-            resolve(null)
-            return
-          }
+    get: (...params) => Helper.httpAction('get', ...params),
+    head: (...params) => Helper.httpAction('head', ...params),
+    post: (...params) => Helper.httpAction('post', ...params),
+    put: (...params) => Helper.httpAction('put', ...params),
+    delete: (...params) => Helper.httpAction('delete', ...params),
+    connect: (...params) => Helper.httpAction('connect', ...params),
+    options: (...params) => Helper.httpAction('options', ...params),
+    trace: (...params) => Helper.httpAction('trace', ...params),
+    patch: (...params) => Helper.httpAction('patch', ...params),
+    any: (...params) => Helper.httpAction('any', ...params)
+  }
 
-          const [param1, param2, param3] = params
-
-          let method
-          if (action.toLowerCase() === 'any') {
-            method = param1
-            url = typeof param2 === 'string' || param3 !== undefined ? param2 : url
-            options = typeof param2 === 'object' && !param3 ? param2 : param3
-          } else {
-            method = action
-            url = typeof param1 === 'string' ? param1 : undefined
-            payload = typeof param2 === 'string' ? param2 : undefined
-            options = typeof param1 === 'object' ? param1 : typeof param2 === 'object' ? param2 : param3
-          }
-          httpRequest({
-            ...options,
-            url,
-            payload,
-            method: typeof method === 'string' ? method.toUpperCase() : undefined
-          })
-          .then(data => {
-            const str = data.toString()
-            try {
-              const json = JSON.parse(str)
-              resolve(json)
-            } catch (error) {
-              Helper.errorPrinter(err)
-              resolve(str)
-            }
-          })
-          .catch(err => {
-            Helper.errorPrinter(err)
-            resolve(null)
-          })
-        })
+  /**
+   * the http action.
+   * Params should be in the following order:
+   * action, url, payload, options
+   * unless action is 'any', then: action, method, url, payload, options
+   * 
+   * url is only optional without payload: action, options
+   * payload and options is always optional
+   *
+   * @memberof httpClient
+   * @async
+   * @function httpAction
+   * @param {String} action - represents the http method/verb.
+   * @param {String} [method] - Provide the http method if using 'any'.
+   * @param {String} [url] - An absolute url.
+   * @param {String} [payload] - The request body.
+   * @param {Object} [options] - nodejs http|https request options object.
+   * @returns {Promise<Object|String>}
+   */
+  static httpAction = (action, ...params) => {
+    return new Promise(resolve => {
+      let url, payload, options, responseType
+      if (params.length === 0 || action.toLowerCase() === 'any' && params.length < 2) {
+        Helper.errorPrinter('No Parameters passed or Too few parameters passed to Any')
+        resolve(null)
+        return
       }
-    }
+
+      const [param1, param2, param3] = params
+
+      let method
+      if (action.toLowerCase() === 'any') {
+        method = param1
+        url = typeof param2 === 'string' || param3 !== undefined ? param2 : url
+        options = typeof param2 === 'object' && !param3 ? param2 : param3
+      } else {
+        method = action
+        url = typeof param1 === 'string' ? param1 : undefined
+        payload = typeof param2 === 'string' ? param2 : undefined
+        options = typeof param1 === 'object' ? param1 : typeof param2 === 'object' ? param2 : param3
+      }
+      if (options) {
+        responseType = options.responseType
+      }
+      Helper.httpRequest({
+        url,
+        payload,
+        method: typeof method === 'string' ? method.toUpperCase() : undefined,
+        ...options
+      })
+      .then(({responseBuffer, originalResponse}) => {     
+        if (responseType && responseType === 'json') {
+          const json = JSON.parse(responseBuffer.toString())
+          resolve(json)
+        } else if (responseType && responseType === 'string') {
+          resolve(responseBuffer.toString())
+        } else {
+          resolve({responseBuffer, originalResponse})
+        }
+      })
+      .catch(err => {
+        Helper.errorPrinter(err)
+        resolve(null)
+      })
+    })
   }
 
   /**
@@ -872,10 +898,10 @@ export default class Helper {
    * @async
    * @function httpRequest
    * @param {Object} [options] - Request options
-   * @returns {Promise<Buffer>}
+   * @returns {Promise<Object>}
    */
   static httpRequest = (options = {}) => {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       const {
         method: methodName,
         hostname: hostName,
@@ -886,16 +912,14 @@ export default class Helper {
         ...remainingOptions
       } = options
       if (typeof methodName !== 'string' || methodName.length < 3) {
-        Helper.errorPrinter('')
-        resolve(Buffer.from(''))
-        return
+        reject({errorMessage: `Method: ${methodName} must be a string and at least 3 characters long`, cause: methodName})
       }
 
       let requestFunction = protocolName === 'http' ? http : https
       let path = pathName
       let hostname = hostName
       if (typeof url === 'string' && url.length > 0) {
-        const protocolRegex = /^(http|https)(:\/\/)/i
+        const protocolRegex = /^((https|http)(:\/\/)|)([a-z0-9-.@:]+)(\?|\/|#|)(.*)/i
         const protocolMatch = url.match(protocolRegex)
         if (protocolMatch !== null) {
           const [_fullMatch, _scheme, protocolString, _colon, hostString, delimeter, pathString] =
@@ -907,38 +931,46 @@ export default class Helper {
       }
 
       const method = methodName.toUpperCase()
-
-      const req = requestFunction.request({
+      const request = requestFunction.request({
         method,
         hostname,
         path,
         ...remainingOptions
-      }, res => {
-        let chunks = []
+      }, originalResponse => {
+        const {statusCode, statusMessage} = originalResponse
+        
+        if (statusCode >= 400) {
+          reject({errorMessage: statusMessage, cause: statusCode})
+        } else {
+          let chunks = []
 
-        res.on('data', chunk => {
-          chunks = [...chunks, chunk]
-        })
+          originalResponse.on('data', chunk => {
+            chunks = [...chunks, chunk]
+          })
 
-        res.on('end', () => {
-          const body = Buffer.concat(chunks)
-          resolve(body)
-        })
+          originalResponse.on('end', () => {
+            const responseBuffer = Buffer.concat(chunks)
+            resolve({responseBuffer, originalResponse})
+          })
 
-        res.on('error', error => {
-          Helper.errorPrinter(error)
-          resolve(Buffer.from(''))
-        })
+          originalResponse.on('error', error => {
+            reject({errorMessage: 'httpRequest Response Error', cause: error})
+          })
+        }
       })
+
+      request.on('error', error => {
+        reject({errorMessage: 'httpRequest Request Error', cause: error})
+      });
 
       if (
         typeof payload === 'string' &&
         payload.length > 0 &&
         (method === 'POST' || method === 'PUT' || method === 'PATCH')
       ) {
-        req.write(payload)
+        request.write(payload)
       }
-      req.end()
+      request.end()
     })
   }
 
