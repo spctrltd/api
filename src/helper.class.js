@@ -1,6 +1,6 @@
 import {stat, mkdirSync, readFileSync, readdirSync, readSync, openSync, closeSync, rmSync} from 'fs'
 import https from 'https'
-import axios from 'axios'
+import http from 'http'
 import moment from 'moment'
 import jsonwebtoken from 'jsonwebtoken'
 import {fileURLToPath} from 'url'
@@ -798,6 +798,13 @@ export default class Helper {
 
   /**
    * An http client.
+   * 
+   * Params should be in the following order:
+   * url, payload, options
+   * unless http method is 'any', then: method, url, payload, options
+   * 
+   * url is only optional without payload
+   * payload and options is always optional
    *
    * @name httpClient
    * @memberof Helper
@@ -805,84 +812,166 @@ export default class Helper {
    * @const
    */
   static httpClient = {
-    /**
-     * POST method http client.
-     *
-     * @memberof httpClient
-     * @async
-     * @function post
-     * @param {String} url - An absolute url.
-     * @param {Object} options - An Axios options object.
-     * @param {Object} inputData - The POST payload.
-     * @returns {Promise<Object>}
-     */
-    post: (url, options, inputData, instance) => {
-      return new Promise(resolve => {
-        ;(instance || axios)
-          .post(url, inputData, options)
-          .then(({data}) => {
-            resolve(data)
-          })
-          .catch(err => {
-            Helper.errorPrinter(err)
-            resolve(null)
-          })
-      })
-    },
+    get: (...params) => Helper.httpAction('get', ...params),
+    head: (...params) => Helper.httpAction('head', ...params),
+    post: (...params) => Helper.httpAction('post', ...params),
+    put: (...params) => Helper.httpAction('put', ...params),
+    delete: (...params) => Helper.httpAction('delete', ...params),
+    connect: (...params) => Helper.httpAction('connect', ...params),
+    options: (...params) => Helper.httpAction('options', ...params),
+    trace: (...params) => Helper.httpAction('trace', ...params),
+    patch: (...params) => Helper.httpAction('patch', ...params),
+    any: (...params) => Helper.httpAction('any', ...params)
+  }
 
-    /**
-     * GET method http client.
-     *
-     * @memberof httpClient
-     * @async
-     * @function post
-     * @param {String} url - An absolute url.
-     * @param {Object} options - An Axios options object.
-     * @returns {Promise<Object>}
-     */
-    get: (url, options, instance) => {
-      return new Promise(resolve => {
-        ;(instance || axios)
-          .get(url, options)
-          .then(({data}) => {
-            resolve(data)
-          })
-          .catch(err => {
-            Helper.errorPrinter(err)
-            resolve(null)
-          })
-      })
-    },
+  /**
+   * the http action.
+   * Params should be in the following order:
+   * action, url, payload, options
+   * unless action is 'any', then: action, method, url, payload, options
+   * 
+   * url is only optional without payload: action, options
+   * payload and options is always optional
+   *
+   * @memberof httpClient
+   * @async
+   * @function httpAction
+   * @param {String} action - represents the http method/verb.
+   * @param {String} [method] - Provide the http method if using 'any'.
+   * @param {String} [url] - An absolute url.
+   * @param {String} [payload] - The request body.
+   * @param {Object} [options] - nodejs http|https request options object.
+   * @returns {Promise<Object|String>}
+   */
+  static httpAction = (action, ...params) => {
+    return new Promise(resolve => {
+      let url, payload, options, responseType
+      if (params.length === 0 || action.toLowerCase() === 'any' && params.length < 2) {
+        Helper.errorPrinter('No Parameters passed or Too few parameters passed to Any')
+        resolve(null)
+        return
+      }
 
-    /**
-     * ANY method http client.
-     *
-     * @memberof httpClient
-     * @async
-     * @function any
-     * @param {String} method - The request method eg. POST, GET, etc.
-     * @param {String} url - An absolute url.
-     * @param {Object} [options] - An Axios options object.
-     * @returns {Promise<Object>}
-     */
-    any: (method, url, options) => {
-      return new Promise(resolve => {
-        axios({
-          method,
-          url,
-          ...options
-        })
-          .then(({status, data}) => {
-            resolve({status, data})
-          })
-          .catch((error = {}) => {
-            const {response = {}} = error
-            const {status, data} = response
-            Helper.errorPrinter(response)
-            resolve({status, data})
-          })
+      const [param1, param2, param3] = params
+
+      let method
+      if (action.toLowerCase() === 'any') {
+        method = param1
+        url = typeof param2 === 'string' || param3 !== undefined ? param2 : url
+        options = typeof param2 === 'object' && !param3 ? param2 : param3
+      } else {
+        method = action
+        url = typeof param1 === 'string' ? param1 : undefined
+        payload = typeof param2 === 'string' ? param2 : undefined
+        options = typeof param1 === 'object' ? param1 : typeof param2 === 'object' ? param2 : param3
+      }
+      if (options) {
+        responseType = options.responseType
+      }
+      Helper.httpRequest({
+        url,
+        payload,
+        method: typeof method === 'string' ? method.toUpperCase() : undefined,
+        ...options
       })
-    }
+      .then(({responseBuffer, originalResponse}) => {     
+        if (responseType && responseType === 'json') {
+          const json = JSON.parse(responseBuffer.toString())
+          resolve(json)
+        } else if (responseType && responseType === 'string') {
+          resolve(responseBuffer.toString())
+        } else {
+          resolve({responseBuffer, originalResponse})
+        }
+      })
+      .catch(err => {
+        Helper.errorPrinter(err)
+        resolve(null)
+      })
+    })
+  }
+
+  /**
+   * http request.
+   *
+   * @memberof Helper
+   * @async
+   * @function httpRequest
+   * @param {Object} [options] - Request options
+   * @returns {Promise<Object>}
+   */
+  static httpRequest = (options = {}) => {
+    return new Promise((resolve, reject) => {
+      const {
+        method: methodName,
+        hostname: hostName,
+        path: pathName,
+        url,
+        protocol: protocolName = 'http',
+        payload = undefined,
+        ...remainingOptions
+      } = options
+      if (typeof methodName !== 'string' || methodName.length < 3) {
+        reject({errorMessage: `Method: ${methodName} must be a string and at least 3 characters long`, cause: methodName})
+      }
+
+      let requestFunction = protocolName === 'http' ? http : https
+      let path = pathName
+      let hostname = hostName
+      if (typeof url === 'string' && url.length > 0) {
+        const protocolRegex = /^((https|http)(:\/\/)|)([a-z0-9-.@:]+)(\?|\/|#|)(.*)/i
+        const protocolMatch = url.match(protocolRegex)
+        if (protocolMatch !== null) {
+          const [_fullMatch, _scheme, protocolString, _colon, hostString, delimeter, pathString] =
+          protocolMatch
+          requestFunction = protocolString === 'http' ? http : https
+          path = `${delimeter === '/' ? '' : '/'}${delimeter}${pathString}`
+          hostname = hostString
+        }
+      }
+
+      const method = methodName.toUpperCase()
+      const request = requestFunction.request({
+        method,
+        hostname,
+        path,
+        ...remainingOptions
+      }, originalResponse => {
+        const {statusCode, statusMessage} = originalResponse
+        
+        if (statusCode >= 400) {
+          reject({errorMessage: statusMessage, cause: statusCode})
+        } else {
+          let chunks = []
+
+          originalResponse.on('data', chunk => {
+            chunks = [...chunks, chunk]
+          })
+
+          originalResponse.on('end', () => {
+            const responseBuffer = Buffer.concat(chunks)
+            resolve({responseBuffer, originalResponse})
+          })
+
+          originalResponse.on('error', error => {
+            reject({errorMessage: 'httpRequest Response Error', cause: error})
+          })
+        }
+      })
+
+      request.on('error', error => {
+        reject({errorMessage: 'httpRequest Request Error', cause: error})
+      });
+
+      if (
+        typeof payload === 'string' &&
+        payload.length > 0 &&
+        (method === 'POST' || method === 'PUT' || method === 'PATCH')
+      ) {
+        request.write(payload)
+      }
+      request.end()
+    })
   }
 
   /**
