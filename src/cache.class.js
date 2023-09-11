@@ -1,4 +1,4 @@
-import moment from 'moment'
+import Helper from './helper.class.js'
 
 /**
  * Cache class
@@ -40,7 +40,7 @@ export default class {
   put = async (key, callback) => {
     if (Object.prototype.hasOwnProperty.call(this.store, `${key}`)) {
       const {value, timestamp} = this.read(key)
-      if (moment().valueOf() - timestamp <= this.updateEntryAfterNMilliseconds) {
+      if (Helper.time() - timestamp <= this.updateEntryAfterNMilliseconds) {
         return value
       }
     }
@@ -60,7 +60,7 @@ export default class {
   write = (key, value) => {
     this.store[`${key}`] = {
       value,
-      timestamp: moment().valueOf()
+      timestamp: Helper.time()
     }
   }
 

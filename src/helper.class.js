@@ -1,7 +1,7 @@
+'use strict'
 import {stat, mkdirSync, readFileSync, readdirSync, readSync, openSync, closeSync, rmSync} from 'fs'
 import https from 'https'
 import http from 'http'
-import moment from 'moment'
 import jsonwebtoken from 'jsonwebtoken'
 import {fileURLToPath} from 'url'
 import path from 'path'
@@ -167,12 +167,12 @@ export default class Helper {
     expireToken = Helper.defaultExpireToken,
     expireRefresh = Helper.defaultExpireRefresh
   ) => {
-    const expiresAfter = moment().add(expireToken, 'minutes')
-    const expiresIn = parseInt((expiresAfter - moment()) / 1000)
+    const expiresAfter = Helper.time(expireToken, 'minutes')
+    const expiresIn = parseInt((expiresAfter - Helper.time()) / 1000)
     const token = jsonwebtoken.sign(payload, secret, {expiresIn})
 
-    const refreshTokenExpiresAfter = moment().add(expireRefresh, 'minutes')
-    const refreshTokenExpiresIn = parseInt((refreshTokenExpiresAfter - moment()) / 1000)
+    const refreshTokenExpiresAfter = Helper.time(expireRefresh, 'minutes')
+    const refreshTokenExpiresIn = parseInt((refreshTokenExpiresAfter - Helper.time()) / 1000)
     const refreshToken = jsonwebtoken.sign(payload, secret, {
       expiresIn: refreshTokenExpiresIn
     })
@@ -578,7 +578,7 @@ export default class Helper {
    */
   static formatedResponse = data =>
     JSON.stringify({
-      tag: moment().valueOf(),
+      tag: Helper.time(),
       data
     })
 
@@ -1190,5 +1190,42 @@ export default class Helper {
         .join('')
     }
     return value
+  }
+
+  /**
+   * Time in milliseconds
+   *
+   * @memberof Helper
+   * @function time
+   * @param {Integer} value - The interval to add to the current time.
+   * @param {String} units - The unit for the interval, i.e seconds, minutes, hours.
+   * @returns {Integer}
+   */
+  static time = (value, units = 'seconds') => {
+    const now = Date.now();
+    if (typeof value !== 'number' || parseInt(value) === 0) {
+      return now
+    }
+    let unit = 0
+    switch (units) {
+      case 'seconds':
+        unit = 1000 * value
+        break
+      case 'minutes':
+        unit = 1000 * 60 * value
+        break
+      case 'hours':
+        unit = 1000 * 60 * 60 * value
+        break
+      case 'days':
+        unit = 1000 * 60 * 60 * 24 * value
+        break
+      case 'weeks':
+        unit = 1000 * 60 * 60 * 24 * 7 * value
+        break
+      default:
+        unit = 0
+    }
+    return now + unit
   }
 }
