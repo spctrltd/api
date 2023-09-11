@@ -35,6 +35,7 @@ jobs:
     - name: Create local changes
       run: |
         git checkout gh-pages
+        rm -rf ./{data,fonts,scripts,styles}
         mv -f ./documentation/* ./
         rm -rf documentation
         git config --local user.email "pages-update@spctr.ltd"
