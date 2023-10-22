@@ -4,6 +4,9 @@ SOURCE_DIR=$(pwd)
 PUBLISH_DIR=$(pwd)/../spctr-api-publish
 
 publish() {
+	cd $SOURCE_DIR
+	git checkout .
+	git checkout development
 	NEWLINE=__N__
 	rm -rf $PUBLISH_DIR
 	mkdir $PUBLISH_DIR
