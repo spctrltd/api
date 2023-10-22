@@ -6,7 +6,7 @@
 import koaPassport from 'koa-passport'
 import {ExtractJwt as extractJwt, Strategy as JwtStrategy} from 'passport-jwt'
 import {Strategy as LocalStrategy} from 'passport-local'
-import moment from 'moment'
+import Helper from './helper.class.js'
 
 /**
  * Default template used for authentication response.
@@ -37,7 +37,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
   const getOtp = async (userId, accountotp) => {
     return await accountotp.findOne({
       expires: {
-        $gt: new Date()
+        $gt: Helper.time()
       },
       userId
     })
@@ -238,7 +238,7 @@ export default (secretKey, jwtExpiresInMinutes, jwtRefreshExpiresInMinutes, user
               await accountotp.delete({userId: user.id})
               await accountotp.insert({
                 userId: user.id,
-                expires: moment().add(30, 'minutes'),
+                expires: Helper.time(30, 'minutes'),
                 otp: pin
               })
               if (otpService) {
