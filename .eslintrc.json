@@ -1,11 +1,10 @@
 {
     "env": {
+	"commonjs": true,
         "es2021": true,
         "node": true
     },
-    "extends": ["standard", "prettier"],
-    "overrides": [
-    ],
+    "extends": ["prettier"],
     "parserOptions": {
         "ecmaVersion": "latest",
         "sourceType": "module"
@@ -15,6 +14,7 @@
     ],
     "rules": {
         "prettier/prettier": "error",
-        "destructuredArrayIgnorePattern": "^_"
+        "no-undef": "error",
+	"no-unused-vars": "warn"
     }
 }

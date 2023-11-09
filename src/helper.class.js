@@ -77,7 +77,7 @@ export default class Helper {
    * @param {String} filePath - absolute path to file.
    * @returns {Promise<Object>}
    */
-  static fileStat = filePath => {
+  static fileStat = (filePath = '') => {
     return new Promise(resolve => {
       stat(filePath, (error, stats) => {
         if (error) {
@@ -798,11 +798,11 @@ export default class Helper {
 
   /**
    * An http client.
-   * 
+   *
    * Params should be in the following order:
    * url, payload, options
    * unless http method is 'any', then: method, url, payload, options
-   * 
+   *
    * url is only optional without payload
    * payload and options is always optional
    *
@@ -829,7 +829,7 @@ export default class Helper {
    * Params should be in the following order:
    * action, url, payload, options
    * unless action is 'any', then: action, method, url, payload, options
-   * 
+   *
    * url is only optional without payload: action, options
    * payload and options is always optional
    *
@@ -846,7 +846,7 @@ export default class Helper {
   static httpAction = (action, ...params) => {
     return new Promise(resolve => {
       let url, payload, options, responseType
-      if (params.length === 0 || action.toLowerCase() === 'any' && params.length < 2) {
+      if (params.length === 0 || (action.toLowerCase() === 'any' && params.length < 2)) {
         Helper.errorPrinter('No Parameters passed or Too few parameters passed to Any')
         resolve(null)
         return
@@ -874,20 +874,20 @@ export default class Helper {
         method: typeof method === 'string' ? method.toUpperCase() : undefined,
         ...options
       })
-      .then(({responseBuffer, originalResponse}) => {     
-        if (responseType && responseType === 'json') {
-          const json = JSON.parse(responseBuffer.toString())
-          resolve(json)
-        } else if (responseType && responseType === 'string') {
-          resolve(responseBuffer.toString())
-        } else {
-          resolve({responseBuffer, originalResponse})
-        }
-      })
-      .catch(err => {
-        Helper.errorPrinter(err)
-        resolve(null)
-      })
+        .then(({responseBuffer, originalResponse}) => {
+          if (responseType && responseType === 'json') {
+            const json = JSON.parse(responseBuffer.toString())
+            resolve(json)
+          } else if (responseType && responseType === 'string') {
+            resolve(responseBuffer.toString())
+          } else {
+            resolve({responseBuffer, originalResponse})
+          }
+        })
+        .catch(err => {
+          Helper.errorPrinter(err)
+          resolve(null)
+        })
     })
   }
 
@@ -912,7 +912,10 @@ export default class Helper {
         ...remainingOptions
       } = options
       if (typeof methodName !== 'string' || methodName.length < 3) {
-        reject({errorMessage: `Method: ${methodName} must be a string and at least 3 characters long`, cause: methodName})
+        reject({
+          errorMessage: `Method: ${methodName} must be a string and at least 3 characters long`,
+          cause: methodName
+        })
       }
 
       let requestFunction = protocolName === 'http' ? http : https
@@ -923,7 +926,7 @@ export default class Helper {
         const protocolMatch = url.match(protocolRegex)
         if (protocolMatch !== null) {
           const [_fullMatch, _scheme, protocolString, _colon, hostString, delimeter, pathString] =
-          protocolMatch
+            protocolMatch
           requestFunction = protocolString === 'http' ? http : https
           path = `${delimeter === '/' ? '' : '/'}${delimeter}${pathString}`
           hostname = hostString
@@ -931,37 +934,40 @@ export default class Helper {
       }
 
       const method = methodName.toUpperCase()
-      const request = requestFunction.request({
-        method,
-        hostname,
-        path,
-        ...remainingOptions
-      }, originalResponse => {
-        const {statusCode, statusMessage} = originalResponse
-        
-        if (statusCode >= 400) {
-          reject({errorMessage: statusMessage, cause: statusCode})
-        } else {
-          let chunks = []
+      const request = requestFunction.request(
+        {
+          method,
+          hostname,
+          path,
+          ...remainingOptions
+        },
+        originalResponse => {
+          const {statusCode, statusMessage} = originalResponse
 
-          originalResponse.on('data', chunk => {
-            chunks = [...chunks, chunk]
-          })
+          if (statusCode >= 400) {
+            reject({errorMessage: statusMessage, cause: statusCode})
+          } else {
+            let chunks = []
 
-          originalResponse.on('end', () => {
-            const responseBuffer = Buffer.concat(chunks)
-            resolve({responseBuffer, originalResponse})
-          })
+            originalResponse.on('data', chunk => {
+              chunks = [...chunks, chunk]
+            })
 
-          originalResponse.on('error', error => {
-            reject({errorMessage: 'httpRequest Response Error', cause: error})
-          })
+            originalResponse.on('end', () => {
+              const responseBuffer = Buffer.concat(chunks)
+              resolve({responseBuffer, originalResponse})
+            })
+
+            originalResponse.on('error', error => {
+              reject({errorMessage: 'httpRequest Response Error', cause: error})
+            })
+          }
         }
-      })
+      )
 
       request.on('error', error => {
         reject({errorMessage: 'httpRequest Request Error', cause: error})
-      });
+      })
 
       if (
         typeof payload === 'string' &&
@@ -1202,7 +1208,7 @@ export default class Helper {
    * @returns {Integer}
    */
   static time = (value, units = 'seconds') => {
-    const now = Date.now();
+    const now = Date.now()
     if (typeof value !== 'number' || parseInt(value) === 0) {
       return now
     }
