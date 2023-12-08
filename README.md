@@ -1,4 +1,4 @@
-# S P C T R . L T D . API
+<img src="/assets/api-1024-banner.png" />
 
 ## Install
 ```
