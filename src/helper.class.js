@@ -662,7 +662,9 @@ export default class Helper {
       port: 8000,
       proxy: undefined,
       morgan: ['common'],
-      userRoutePath: undefined // Absolute path to user-defined routes (see docs for more details)
+      userRoutePath: undefined, // Absolute path to user-defined routes (see docs for more details)
+      use: [], // for adding middleware to the server
+      bodyParser: {} // KoaBody config. See koa-body npm package.
     },
     service: {
       otp: otp => Helper.developerPrinter({otp}) // a function for sending the otp code. arguments = (otp, databaseObject) (see docs for example)

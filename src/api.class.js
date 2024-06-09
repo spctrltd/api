@@ -28,6 +28,7 @@ export default class {
     this.isConfigured = false
     this.server.context.test = {routes: {}, database: {}}
     this.server.context.configuration = this.config
+    this.server.context.symbols = {unparsed: Symbol.for('unparsedBody')}
   }
 
   /**
@@ -57,7 +58,9 @@ export default class {
       allowCors,
       proxy,
       sessionKey,
-      morgan: morganOptions
+      morgan: morganOptions,
+      use,
+      bodyParser
     } = this.config.server
     if (allowCors) {
       this.server.use(Cors())
@@ -76,11 +79,17 @@ export default class {
     const parser = koaBody({
       formidable: {uploadDir},
       multipart: true,
-      urlencoded: true
+      urlencoded: true,
+      ...bodyParser
     })
     this.server.use(parser)
     if (Array.isArray(morganOptions)) {
       this.server.use(morgan(...morganOptions))
+    }
+    if (Array.isArray(use)) {
+      use.forEach(u => {
+        this.server.use(u)
+      })
     }
   }
 
