@@ -19,12 +19,21 @@ export default class {
     this.updateEntryAfterNMilliseconds = parseInt(updateEntryAfterNMilliseconds)
     this.clearAllAfterNMilliseconds = parseInt(clearAllAfterNMilliseconds)
     this.clearanceInterval()
+    const sab = new SharedArrayBuffer(4)
+    this.lock = new Int32Array(sab)
+    this.lock[0] = 0
   }
 
   clearanceInterval = () => {
     setTimeout(() => {
       this.store = {}
     }, parseInt(this.clearAllAfterNMilliseconds))
+  }
+
+  writeCallback = async (key, callback) => {
+    const returnValue = await callback()
+    this.write(key, returnValue)
+    return returnValue
   }
 
   /**
@@ -35,18 +44,30 @@ export default class {
    * @function put
    * @param {Any} key - The key to the stored value.
    * @param {Function} callback - The function to call if value is not in the store.
+   * @param {Boolean} [shouldBlock] - Blocks other calls to the key until new value has been set.
    * @returns {Promise<Any>}
    */
-  put = async (key, callback) => {
+  put = async (key, callback, shouldBlock = false) => {
     if (Object.prototype.hasOwnProperty.call(this.store, `${key}`)) {
       const {value, timestamp} = this.read(key)
       if (Helper.time() - timestamp <= this.updateEntryAfterNMilliseconds) {
         return value
       }
     }
-    const returnValue = await callback()
-    this.write(key, returnValue)
-    return returnValue
+    if (shouldBlock) {
+      if (Atomics.load(this.lock, 0) === 1) {
+        const {value} = Atomics.waitAsync(this.lock, 0, 1)
+        await value
+        return await this.put(key, callback, shouldBlock)
+      } else {
+        Atomics.store(this.lock, 0, 1)
+        const returnValue = await this.writeCallback(key, callback)
+        Atomics.store(this.lock, 0, 0)
+        Atomics.notify(this.lock, 0)
+        return returnValue
+      }
+    }
+    return await this.writeCallback(key, callback)
   }
 
   /**
