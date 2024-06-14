@@ -44,11 +44,12 @@ export default class {
    * @function put
    * @param {Any} key - The key to the stored value.
    * @param {Function} callback - The function to call if value is not in the store.
+   * @param {Boolean} [forceUpdate] - Skips the cached value and uses the callback.
    * @param {Boolean} [shouldBlock] - Blocks other calls to the key until new value has been set.
    * @returns {Promise<Any>}
    */
-  put = async (key, callback, shouldBlock = false) => {
-    if (Object.prototype.hasOwnProperty.call(this.store, `${key}`)) {
+  put = async (key, callback, forceUpdate = false, shouldBlock = false) => {
+    if (!forceUpdate && Object.prototype.hasOwnProperty.call(this.store, `${key}`)) {
       const {value, timestamp} = this.read(key)
       if (Helper.time() - timestamp <= this.updateEntryAfterNMilliseconds) {
         return value
