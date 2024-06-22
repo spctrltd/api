@@ -900,6 +900,11 @@ export default class Helper {
    * @async
    * @function httpRequest
    * @param {Object} [options] - Request options
+   * - Additional request options:
+   *   - url: the full endpoint, protocol+domain+path+query
+   *   - payload: the request body in case of POST, PATCH or PUT
+   *   - followRedirect: boolean that when true instructs whether
+   *                     to follow status code 3xx to specified location
    * @returns {Promise<Object>}
    */
   static httpRequest = (options = {}) => {
@@ -911,6 +916,7 @@ export default class Helper {
         url,
         protocol: protocolName = 'http',
         payload = undefined,
+        followRedirect = false,
         ...remainingOptions
       } = options
       if (typeof methodName !== 'string' || methodName.length < 3) {
@@ -944,10 +950,19 @@ export default class Helper {
           ...remainingOptions
         },
         originalResponse => {
-          const {statusCode, statusMessage} = originalResponse
+          const {statusCode, statusMessage, headers} = originalResponse
 
           if (statusCode >= 400) {
             reject({errorMessage: statusMessage, cause: statusCode})
+          } else if (statusCode >= 300 && followRedirect) {
+            if (Object.prototype.hasOwnProperty.call(headers, 'location')) {
+              resolve(Helper.httpRequest({...options, url: headers.location}))
+            } else {
+              reject({
+                errorMessage: 'httpRequest Response Error',
+                cause: new Error('Redirect location not specified')
+              })
+            }
           } else {
             let chunks = []
 
