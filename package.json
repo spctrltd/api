@@ -1,6 +1,6 @@
 {
     "name": "@spctrltd/api",
-    "version": "0.0.5-2",
+    "version": "0.0.5-3",
     "description": "general http api",
     "main": "index.js",
     "scripts": {
