@@ -159,22 +159,25 @@ export default class Helper {
    * @param {String} secret - the key used to encrypt the payload.
    * @param {Number} [expireToken] - token validity period in minutes.
    * @param {Number} [expireRefresh] - refresh token validity period in minutes.
+   * @param {Object} [options] - options passed to jsonwebtoken
    * @returns {Object}
    */
   static generateToken = (
     payload,
     secret,
     expireToken = Helper.defaultExpireToken,
-    expireRefresh = Helper.defaultExpireRefresh
+    expireRefresh = Helper.defaultExpireRefresh,
+    options = {}
   ) => {
     const expiresAfter = Helper.time(expireToken, 'minutes')
     const expiresIn = parseInt((expiresAfter - Helper.time()) / 1000)
-    const token = jsonwebtoken.sign(payload, secret, {expiresIn})
+    const token = jsonwebtoken.sign(payload, secret, {expiresIn, ...options})
 
     const refreshTokenExpiresAfter = Helper.time(expireRefresh, 'minutes')
     const refreshTokenExpiresIn = parseInt((refreshTokenExpiresAfter - Helper.time()) / 1000)
     const refreshToken = jsonwebtoken.sign(payload, secret, {
-      expiresIn: refreshTokenExpiresIn
+      expiresIn: refreshTokenExpiresIn,
+      ...options
     })
 
     return {token, expiresAfter, refreshToken, refreshTokenExpiresAfter}
@@ -187,11 +190,12 @@ export default class Helper {
    * @function verifyToken
    * @param {Object} token - the JWT to verify.
    * @param {String} secret - the key used to decrypt the JWT data.
+   * @param {Object} [options] - options passed to jsonwebtoken
    * @returns {Object}
    */
-  static verifyToken = (token, secret) => {
+  static verifyToken = (token, secret, options = {}) => {
     try {
-      return jsonwebtoken.verify(token, secret)
+      return jsonwebtoken.verify(token, secret, options)
     } catch (error) {
       Helper.errorPrinter(`verifyToken: ${error}`)
       return null
@@ -502,7 +506,7 @@ export default class Helper {
       if (typeof object === 'object') {
         return Object.keys(object).reduce((builtObject, key) => {
           let value = object[key]
-          if (typeof value === 'object' && value !== [] && value !== {}) {
+          if (typeof value === 'object' && Object.keys(value).length > 0) {
             value = Helper.populateObject(value, defaults[key])
           } else if (Helper.isEmpty(value)) {
             return builtObject
@@ -641,7 +645,7 @@ export default class Helper {
       initialiseUserAccount: false,
       /*
       create default database data for user authentication. If true, this will create
-      default user (at defaultUser property) and otp database tables/collections 
+      default user (at defaultUser property) and otp database tables/collections
       for use with the default authentication routes
       */
       addConnection: false
