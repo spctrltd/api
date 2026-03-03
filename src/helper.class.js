@@ -506,7 +506,11 @@ export default class Helper {
       if (typeof object === 'object') {
         return Object.keys(object).reduce((builtObject, key) => {
           let value = object[key]
-          if (typeof value === 'object' && Object.keys(value).length > 0) {
+          if (
+            !Helper.isEmpty(value) &&
+            typeof value === 'object' &&
+            Object.keys(value).length > 0
+          ) {
             value = Helper.populateObject(value, defaults[key])
           } else if (Helper.isEmpty(value)) {
             return builtObject
